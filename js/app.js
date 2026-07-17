@@ -74,9 +74,9 @@ function initMemberDynamicFields() {
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    <div class="form-group" style="display:flex; align-items:center; gap:0.5rem; margin-top:2rem;">
+                    <div class="form-group checkbox-align">
                         <input type="checkbox" name="memberAbcd_${i}" id="abcd_${i}" value="yes">
-                        <label for="abcd_${i}" style="margin:0;">ABCD Chronic Care</label>
+                        <label for="abcd_${i}" style="margin:0; cursor:pointer;">ABCD Chronic Care</label>
                     </div>
                 </div>
             `;
