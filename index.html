@@ -212,7 +212,8 @@
 
             <!-- STEP 4: Output / Result -->
             <div class="form-step hidden" data-step="4">
-                <div id="premium-summary-card">
+                <div id="premium-summary-card" style="position: relative;">
+                    <button type="button" id="help-btn" class="help-circle-btn no-pdf" title="Premium Calculation Guide">?</button>
                     <div class="glass-card mb-4" style="background: var(--surface); padding: 1.5rem; margin-bottom: 1.5rem;">
                         <h3 class="mb-3" style="border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; font-size: 1.25rem;">Policy & Insured Details</h3>
                         <div id="final-policy-details" style="font-size: 0.95rem; line-height: 1.6;">
@@ -253,6 +254,50 @@
             </div>
 
         </form>
+    </div>
+</div>
+
+<!-- Calculation Help Modal -->
+<div id="help-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-card">
+        <div class="modal-header">
+            <h3>Premium Calculation Guide</h3>
+            <button type="button" id="close-modal-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="help-section">
+                <h4>1. Base Premium & Chronic Loading</h4>
+                <p>Based on age and Sum Insured. An additional <strong>+25% Chronic Loading</strong> is applied directly to the individual base premium of any member with ABCD chronic conditions.</p>
+            </div>
+            <div class="help-section">
+                <h4>2. Floater Discount</h4>
+                <p>The oldest member is treated as Primary (100% premium). All subsequent members receive a <strong>55% discount</strong> on their base premium.</p>
+            </div>
+            <div class="help-section">
+                <h4>3. Deductible Discount</h4>
+                <p>Reduces premium if you choose to pay initial claims out of pocket. Discount percentages (up to 90%) are tiered by Sum Insured (&lt;25L, =25L, &gt;25L).</p>
+            </div>
+            <div class="help-section">
+                <h4>4. NRI & Lifetime Discounts</h4>
+                <p><strong>NRI Discount:</strong> 40% discount if all members are NRIs.<br><strong>Lifetime Discount:</strong> 5% discount for new buyers if all members are under 35.</p>
+            </div>
+            <div class="help-section">
+                <h4>5. Porting & Existing Customer</h4>
+                <p><strong>Porting Discount:</strong> 5% discount for switching policies.<br><strong>Existing HDFC Ergo Customer:</strong> 8% discount for active customers.</p>
+            </div>
+            <div class="help-section">
+                <h4>6. Claim Loading</h4>
+                <p>A <strong>+20% loading</strong> (increase) is applied if a claim was made in the last 2 years.</p>
+            </div>
+            <div class="help-section">
+                <h4>7. Favourable Claims Discount</h4>
+                <p>Applied year-by-year based on claims history. <strong>Only applies to members under 60 years old</strong> on their sequential premium base.</p>
+            </div>
+            <div class="help-section">
+                <h4>8. Long Term Discount</h4>
+                <p>Applied at the end of the calculation sequence: <strong>6% discount</strong> for 2-year tenure, or <strong>8% discount</strong> for 3 to 5 years tenure.</p>
+            </div>
+        </div>
     </div>
 </div>
 

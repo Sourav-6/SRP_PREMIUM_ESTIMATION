@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initNavigation();
     initThemeToggle();
     initActionButtons();
+    initHelpModal();
     
     // Setup initial state
     updateStepUI();
@@ -466,4 +467,27 @@ function initActionButtons() {
     });
 
     document.getElementById('download-btn').addEventListener('click', downloadPDF);
+}
+
+function initHelpModal() {
+    const helpBtn = document.getElementById('help-btn');
+    const helpModal = document.getElementById('help-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    if (helpBtn && helpModal && closeModalBtn) {
+        helpBtn.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+
+        // Close when clicking outside of modal content
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.add('hidden');
+            }
+        });
+    }
 }
