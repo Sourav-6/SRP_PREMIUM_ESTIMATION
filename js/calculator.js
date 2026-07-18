@@ -4,7 +4,7 @@
  */
 
 export function calculatePremium(inputs, config, rates) {
-    const { sumInsured, tenure, members, nri, deductible, policyHistory, existingCustomer, claim } = inputs;
+    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim } = inputs;
     const rules = rates.discountRules;
     const breakdown = { adjustments: [], memberBreakdown: [] };
     

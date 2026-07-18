@@ -236,6 +236,7 @@ function populateSummaryStep(formData) {
     html += `<div><strong>Members:</strong> ${memberCount}</div>`;
     html += `<div><strong>Deductible:</strong> ${deductibleText}</div>`;
     html += `<div><strong>All Insured NRI's:</strong> ${formData.get('nri') === 'yes' ? 'Yes' : 'No'}</div>`;
+    html += `<div><strong>Porting Policy:</strong> ${formData.get('porting') === 'yes' ? 'Yes' : 'No'}</div>`;
     html += `<div><strong>Existing HDFC Ergo Customer:</strong> ${formData.get('existingCustomer') === 'yes' ? 'Yes' : 'No'}</div>`;
     html += `<div><strong>Claim in last 2 years:</strong> ${formData.get('claim') === 'yes' ? 'Yes' : 'No'}</div>`;
     html += `<div class="col-span-2"><strong>Policy History:</strong> ${historyText}</div>`;
@@ -266,6 +267,7 @@ function processCalculation() {
         nri: formData.get('nri') === 'yes',
         deductible: parseInt(formData.get('deductible'), 10),
         policyHistory: formData.get('policyHistory'),
+        porting: formData.get('porting') === 'yes',
         existingCustomer: formData.get('existingCustomer') === 'yes',
         claim: formData.get('claim') === 'yes'
     };
