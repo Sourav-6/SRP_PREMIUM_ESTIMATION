@@ -21,11 +21,6 @@
     "10": 5.0
   },
   "nriDiscount": 0.10,
-  "portingAdjustment": 0.05,
-  "planMultipliers": {
-    "R1": 1.0,
-    "R2_AND_ABOVE": 1.4
-  },
   "claimLoading": 0.20,
-  "existingCustomerDiscount": 0.08
+  "existingCustomerDiscount": 0.025
 }

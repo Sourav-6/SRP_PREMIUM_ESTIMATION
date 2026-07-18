@@ -4,7 +4,7 @@
  */
 
 export function calculatePremium(inputs, config, rates) {
-    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim } = inputs;
+    const { sumInsured, tenure, members, nri, deductible, policyHistory, existingCustomer, claim } = inputs;
     const rules = rates.discountRules;
     const breakdown = { adjustments: [], memberBreakdown: [] };
     
@@ -98,7 +98,7 @@ export function calculatePremium(inputs, config, rates) {
     let deductibleDiscountAmount = Math.round(totalPremium * deductibleDiscount);
     if (deductibleDiscountAmount > 0) {
         breakdown.adjustments.push({ 
-            name: `Deductible Discount (-${Math.round(deductibleDiscount * 100)}%)`, 
+            name: `Deductible Discount (-${+(deductibleDiscount * 100).toFixed(2)}%)`, 
             amount: -deductibleDiscountAmount, 
             type: 'discount_amount' 
         });
@@ -110,45 +110,34 @@ export function calculatePremium(inputs, config, rates) {
     let nriDiscountAmount = Math.round(runningPremium * nriDiscountPct);
     if (nriDiscountAmount > 0) {
         breakdown.adjustments.push({ 
-            name: `NRI Discount (-${Math.round(nriDiscountPct * 100)}%)`, 
+            name: `NRI Discount (-${+(nriDiscountPct * 100).toFixed(2)}%)`, 
             amount: -nriDiscountAmount, 
             type: 'discount_amount' 
         });
         runningPremium -= nriDiscountAmount;
     }
 
-    // 5. Lifetime Discount (New Policy/First-Time Buyer + All members under 35)
-    let isAllUnder35 = membersWithPremium.every(m => m.age < 35);
-    let isNewPolicy = (policyHistory === 'first_time_buyer');
-    let lifetimeDiscountPct = (isNewPolicy && isAllUnder35) ? (rules.lifetime_under_35 || 0.05) : 0.0;
+    // 5. Lifetime Discount (All members 35 or less)
+    let isAllUnder35 = membersWithPremium.every(m => m.age <= 35);
+    let lifetimeDiscountPct = isAllUnder35 ? (rules.lifetime_under_35 || 0.05) : 0.0;
     let lifetimeDiscountAmount = Math.round(runningPremium * lifetimeDiscountPct);
     if (lifetimeDiscountAmount > 0) {
         breakdown.adjustments.push({ 
-            name: `Lifetime Discount (-${Math.round(lifetimeDiscountPct * 100)}%)`, 
+            name: `Lifetime Discount (-${+(lifetimeDiscountPct * 100).toFixed(2)}%)`, 
             amount: -lifetimeDiscountAmount, 
             type: 'discount_amount' 
         });
         runningPremium -= lifetimeDiscountAmount;
     }
 
-    // 6b. Porting Discount
-    let portingDiscountPct = porting ? (config.portingAdjustment || 0.05) : 0.0;
-    let portingDiscountAmount = Math.round(runningPremium * portingDiscountPct);
-    if (portingDiscountAmount > 0) {
-        breakdown.adjustments.push({ 
-            name: `Porting Discount (-${Math.round(portingDiscountPct * 100)}%)`, 
-            amount: -portingDiscountAmount, 
-            type: 'discount_amount' 
-        });
-        runningPremium -= portingDiscountAmount;
-    }
+    // Porting Discount removed
 
     // 6c. Existing HDFC Ergo Customer Discount
     let existingDiscountPct = existingCustomer ? (config.existingCustomerDiscount || 0.08) : 0.0;
     let existingDiscountAmount = Math.round(runningPremium * existingDiscountPct);
     if (existingDiscountAmount > 0) {
         breakdown.adjustments.push({ 
-            name: `Existing Customer Discount (-${Math.round(existingDiscountPct * 100)}%)`, 
+            name: `Existing Customer Discount (-${+(existingDiscountPct * 100).toFixed(2)}%)`, 
             amount: -existingDiscountAmount, 
             type: 'discount_amount' 
         });
@@ -160,7 +149,7 @@ export function calculatePremium(inputs, config, rates) {
     let claimLoadingAmount = Math.round(runningPremium * claimLoadingPct);
     if (claimLoadingAmount > 0) {
         breakdown.adjustments.push({ 
-            name: `Claim Loading (+${Math.round(claimLoadingPct * 100)}%)`, 
+            name: `Claim Loading (+${+(claimLoadingPct * 100).toFixed(2)}%)`, 
             amount: claimLoadingAmount, 
             type: 'loading_amount' 
         });
@@ -175,7 +164,7 @@ export function calculatePremium(inputs, config, rates) {
             membersWithPremium.forEach(member => {
                 if (member.age < 60) {
                     // Apply preceding sequential adjustments to the member's floater premium
-                    let memberPremSeq = member.floaterPremium * (1 - deductibleDiscount) * (1 - nriDiscountPct) * (1 - lifetimeDiscountPct) * (1 - portingDiscountPct) * (1 - existingDiscountPct) * (1 + claimLoadingPct);
+                    let memberPremSeq = member.floaterPremium * (1 - deductibleDiscount) * (1 - nriDiscountPct) * (1 - lifetimeDiscountPct) * (1 - existingDiscountPct) * (1 + claimLoadingPct);
                     totalClaimsDiscountAmount += memberPremSeq * r_y;
                 }
             });
@@ -197,7 +186,7 @@ export function calculatePremium(inputs, config, rates) {
     let tenureDiscountAmount = Math.round(runningPremium * tenureDiscount);
     if (tenureDiscountAmount > 0) {
         breakdown.adjustments.push({ 
-            name: `Long Term Discount (${tenure} Yrs, -${Math.round(tenureDiscount * 100)}%)`, 
+            name: `Long Term Discount (${tenure} Yrs, -${+(tenureDiscount * 100).toFixed(2)}%)`, 
             amount: -tenureDiscountAmount, 
             type: 'discount_amount' 
         });
