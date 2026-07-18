@@ -6,3 +6,5 @@ Thumbs.db
 ~$*.xlsx
 ~$*.xls
 *.tmp
+node_modules/
+data/*.db
