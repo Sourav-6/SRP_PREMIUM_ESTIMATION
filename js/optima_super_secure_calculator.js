@@ -1,10 +1,5 @@
-/**
- * Health Insurance Premium Calculation Engine - Optima Secure
- * Uses exact rates and discount logic from Excel data.
- */
-
-export function calculatePremium(inputs, config, rates) {
-    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim } = inputs;
+export function calculateSuperSecurePremium(inputs, config, rates) {
+    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim, unlimitedRestore, limitlessRider, wellbeingRider } = inputs;
     const rules = rates.discountRules;
     const breakdown = { adjustments: [], memberBreakdown: [] };
     
@@ -21,9 +16,7 @@ export function calculatePremium(inputs, config, rates) {
     }
 
     // 1 & 2. Calculate Base Premium per member over the tenure (Age Progression)
-    // Sort members by age descending. Oldest pays 100%, others get 55% discount.
     let sortedMembers = [...members].sort((a, b) => b.age - a.age);
-    
     let membersWithPremium = sortedMembers.map((member, index) => {
         let isPrimary = index === 0;
         let floaterDiscount = isPrimary ? 0 : rules.floater_subsequent_member;
@@ -34,7 +27,7 @@ export function calculatePremium(inputs, config, rates) {
             floaterDiscount,
             totalBase: 0,
             floaterPremium: 0,
-            yearPremiums: [] // Store each year's premium for Favourable Claims calculation
+            yearPremiums: []
         };
     });
 
@@ -50,16 +43,17 @@ export function calculatePremium(inputs, config, rates) {
             if (rates.baseRates[siKey] && rates.baseRates[siKey][ageKey]) {
                 basePrem = rates.baseRates[siKey][ageKey];
             } else {
-                // Fallback: try highest available age if not found
-                const availableAges = Object.keys(rates.baseRates[siKey]).map(Number).sort((a,b)=>a-b);
-                const maxAge = availableAges[availableAges.length - 1];
-                basePrem = rates.baseRates[siKey][maxAge.toString()];
+                const availableAges = Object.keys(rates.baseRates[siKey] || {}).map(Number).sort((a,b)=>a-b);
+                if (availableAges.length > 0) {
+                    const maxAge = availableAges[availableAges.length - 1];
+                    basePrem = rates.baseRates[siKey][maxAge.toString()];
+                }
             }
 
             // Apply ABCD Chronic loading
             let abcdLoading = 0;
             if (member.abcd) {
-                abcdLoading = basePrem * rules.abcd_chronic_loading;
+                abcdLoading = basePrem * (rules.abcd_chronic_loading || 0.25);
             }
 
             let totalBaseForYear = basePrem + abcdLoading;
@@ -73,7 +67,6 @@ export function calculatePremium(inputs, config, rates) {
         });
     }
 
-    // Add to UI breakdown
     membersWithPremium.forEach(member => {
         breakdown.memberBreakdown.push({
             name: member.name || `${member.relation}`,
@@ -85,17 +78,16 @@ export function calculatePremium(inputs, config, rates) {
     });
 
     breakdown.totalBasePremium = totalPremium;
-    
     let runningPremium = totalPremium;
 
-    // 3. Deductible Discount
+    // 3. Deductible Discount (same as Optima Secure Plus)
     let deductibleDiscount = 0.0;
     if (deductible > 0) {
         let tier = 'over_25L';
         if (sumInsured < 2500000) tier = 'under_25L';
         else if (sumInsured === 2500000) tier = 'eq_25L';
         
-        if (rates.deductibleDiscounts[deductible.toString()]) {
+        if (rates.deductibleDiscounts && rates.deductibleDiscounts[deductible.toString()]) {
             deductibleDiscount = rates.deductibleDiscounts[deductible.toString()][tier] || 0.0;
         }
     }
@@ -108,6 +100,44 @@ export function calculatePremium(inputs, config, rates) {
             type: 'discount_amount' 
         });
         runningPremium -= deductibleDiscountAmount;
+    }
+
+    // Unlimited Restore Loading
+    let restoreLoadingPct = 0.0;
+    if (unlimitedRestore) {
+        if (sumInsured < 300000) restoreLoadingPct = 0.15;
+        else if (sumInsured < 500000) restoreLoadingPct = 0.05;
+        else restoreLoadingPct = 0.005;
+
+        let restoreLoadingAmount = Math.round(runningPremium * restoreLoadingPct);
+        if (restoreLoadingAmount > 0) {
+            breakdown.adjustments.push({ 
+                name: `Unlimited Restore Loading (+${+(restoreLoadingPct * 100).toFixed(1)}%)`, 
+                amount: restoreLoadingAmount, 
+                type: 'loading_amount' 
+            });
+            runningPremium += restoreLoadingAmount;
+        }
+    }
+
+    // Limitless Loading
+    let limitlessLoadingPct = 0.0;
+    if (limitlessRider) {
+        if (sumInsured >= 1000000 && sumInsured <= 2500000) limitlessLoadingPct = 0.10;
+        else if (sumInsured === 5000000) limitlessLoadingPct = 0.06;
+        else if (sumInsured === 7500000) limitlessLoadingPct = 0.03;
+        else if (sumInsured === 10000000) limitlessLoadingPct = 0.025; // 1 Cr
+        else if (sumInsured >= 20000000) limitlessLoadingPct = 0.015; // 2 Cr
+
+        if (limitlessLoadingPct > 0) {
+            let limitlessLoadingAmount = Math.round(runningPremium * limitlessLoadingPct);
+            breakdown.adjustments.push({ 
+                name: `Limitless Rider Loading (+${+(limitlessLoadingPct * 100).toFixed(1)}%)`, 
+                amount: limitlessLoadingAmount, 
+                type: 'loading_amount' 
+            });
+            runningPremium += limitlessLoadingAmount;
+        }
     }
 
     // Mandatory 20% Co-payment for Age > 60
@@ -148,9 +178,7 @@ export function calculatePremium(inputs, config, rates) {
         runningPremium -= lifetimeDiscountAmount;
     }
 
-    // Porting Discount removed
-
-    // 6c. Existing HDFC Ergo Customer Discount
+    // 6. Existing HDFC Ergo Customer Discount
     let existingDiscountPct = existingCustomer ? (config.existingCustomerDiscount || 0.08) : 0.0;
     let existingDiscountAmount = Math.round(runningPremium * existingDiscountPct);
     if (existingDiscountAmount > 0) {
@@ -162,7 +190,7 @@ export function calculatePremium(inputs, config, rates) {
         runningPremium -= existingDiscountAmount;
     }
 
-    // 6d. Claim Loading
+    // 7. Claim Loading
     let claimLoadingPct = claim ? (config.claimLoading || 0.20) : 0.0;
     let claimLoadingAmount = Math.round(runningPremium * claimLoadingPct);
     if (claimLoadingAmount > 0) {
@@ -174,16 +202,44 @@ export function calculatePremium(inputs, config, rates) {
         runningPremium += claimLoadingAmount;
     }
 
-    // 7. Favourable Claims Discount (for members under 60 in that policy year)
+    // Wellbeing Rider
+    let wellbeingPremium = 0;
+    if (wellbeingRider) {
+        let isFloater = members.length > 1;
+        let baseWellbeingPremiumPerYear = isFloater ? 1999 : 999;
+        
+        let totalBaseWellbeing = baseWellbeingPremiumPerYear * tenure;
+        
+        // Apply existing customer discount (loyalty)
+        let wellbeingLoyaltyDiscountAmount = Math.round(totalBaseWellbeing * existingDiscountPct);
+        let remainingWellbeing = totalBaseWellbeing - wellbeingLoyaltyDiscountAmount;
+        
+        breakdown.adjustments.push({ 
+            name: `Optima Wellbeing Rider (${tenure} Yrs)`, 
+            amount: totalBaseWellbeing, 
+            type: 'loading_amount' 
+        });
+        runningPremium += totalBaseWellbeing;
+        
+        if (wellbeingLoyaltyDiscountAmount > 0) {
+            breakdown.adjustments.push({ 
+                name: `Wellbeing Loyalty Discount (-${+(existingDiscountPct * 100).toFixed(2)}%)`, 
+                amount: -wellbeingLoyaltyDiscountAmount, 
+                type: 'discount_amount' 
+            });
+            runningPremium -= wellbeingLoyaltyDiscountAmount;
+        }
+    }
+
+    // 8. Favourable Claims Discount (for members under 60 in that policy year)
     let totalClaimsDiscountAmount = 0;
     for (let y = 1; y <= tenure; y++) {
         let r_y = getClaimsDiscountRate(policyHistory, y);
         if (r_y > 0) {
             membersWithPremium.forEach(member => {
                 if (member.age + (y - 1) < 60) {
-                    // Apply preceding sequential adjustments to the member's specific year premium
                     let memberYearPrem = member.yearPremiums[y - 1];
-                    let memberPremSeq = memberYearPrem * (1 - deductibleDiscount) * (1 - nriDiscountPct) * (1 - lifetimeDiscountPct) * (1 - existingDiscountPct) * (1 + claimLoadingPct);
+                    let memberPremSeq = memberYearPrem * (1 - deductibleDiscount) * (1 + restoreLoadingPct) * (1 + limitlessLoadingPct) * (1 - nriDiscountPct) * (1 - lifetimeDiscountPct) * (1 - existingDiscountPct) * (1 + claimLoadingPct);
                     totalClaimsDiscountAmount += memberPremSeq * r_y;
                 }
             });
@@ -200,7 +256,7 @@ export function calculatePremium(inputs, config, rates) {
         runningPremium -= roundedClaimsDiscountAmount;
     }
 
-    // 8. Long Term Tenure Discount
+    // 9. Long Term Tenure Discount
     let tenureDiscount = (tenure === 2) ? (rules.long_term_2_yr || 0.06) : (tenure >= 3 ? (rules.long_term_3_to_5_yr || 0.08) : 0.0);
     let tenureDiscountAmount = Math.round(runningPremium * tenureDiscount);
     if (tenureDiscountAmount > 0) {

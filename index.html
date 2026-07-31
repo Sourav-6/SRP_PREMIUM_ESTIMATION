@@ -13,6 +13,7 @@
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="./css/styles.v3.css">
+    <link rel="stylesheet" href="./css/dashboard.css">
 
     <!-- PDF Generation Libraries (Loaded from CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
@@ -24,6 +25,7 @@
     <header>
         <h1 class="app-title">SRP Insure</h1>
         <p class="text-muted">Calculate your health insurance premium instantly.</p>
+
         
         <div class="theme-switch-wrapper">
             <span class="mr-2 text-sm text-muted">Dark Mode</span>
@@ -34,22 +36,11 @@
         </div>
     </header>
 
-    <div class="glass-card">
-        <!-- Progress Indicator -->
-        <div class="stepper-container">
-            <div id="progress-bar" style="width: 0%;"></div>
-            <div class="step-indicator active">1</div>
-            <div class="step-indicator">2</div>
-            <div class="step-indicator">3</div>
-            <div class="step-indicator">4</div>
-        </div>
-
-        <form id="calculator-form" onsubmit="return false;">
+    <!-- Main Application Form -->
+    <form id="calculator-form" onsubmit="return false;">
             
-            <!-- STEP 1: Family Details -->
-            <div class="form-step fade-in" data-step="1">
-                <h2 class="mb-4">Family Details</h2>
-                
+            <!-- Top Configuration Bar -->
+            <div class="top-config-bar fade-in mb-4">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="sumInsured">Sum Insured <span class="text-error">*</span></label>
@@ -85,97 +76,21 @@
                     </div>
                 </div>
 
-                <div id="dynamic-members-container">
+                <div id="dynamic-members-container" class="mt-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 2.5rem;">
                     <!-- Cards injected via JS -->
-                </div>
-
-                <div class="btn-actions">
-                    <div></div> <!-- Spacer -->
-                    <button type="button" class="btn btn-primary next-btn">Next Step ➔</button>
                 </div>
             </div>
 
-            <!-- STEP 2: Additional Information -->
-            <div class="form-step hidden" data-step="2">
-                <h2 class="mb-4">Additional Information</h2>
-                
-                <div class="form-grid">
-                    <div class="form-group col-span-2">
-                        <label for="policyHistory">Policy History & Claims Record <span class="text-error">*</span></label>
-                        <select id="policyHistory" name="policyHistory" class="form-control" required>
-                            <option value="first_time_buyer" selected>First-time buyer of Health Insurance</option>
-                            <option value="1_yr_old_with_claim">1 year old policy with claim</option>
-                            <option value="1_yr_old_without_claim">1 year old policy without claim</option>
-                            <option value="2_yr_plus_without_claim">2 or more years old policy without claim</option>
-                            <option value="2_yr_plus_with_claim_one_yr">2 or more years old policy with claim in any one year</option>
-                            <option value="2_yr_plus_with_claim_both_yrs">2 or more years old policy with claim in both years</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Are all insured NRI's? <span class="text-error">*</span></label>
-                        <div class="radio-group">
-                            <label class="radio-card">
-                                <input type="radio" name="nri" value="yes">
-                                <span class="radio-card-content">Yes</span>
-                            </label>
-                            <label class="radio-card">
-                                <input type="radio" name="nri" value="no" checked>
-                                <span class="radio-card-content">No</span>
-                            </label>
-                        </div>
-                    </div>
-
-
-
-
-
-                    <div class="form-group">
-                        <label>Porting Policy? <span class="text-error">*</span></label>
-                        <div class="radio-group">
-                            <label class="radio-card">
-                                <input type="radio" name="porting" value="yes">
-                                <span class="radio-card-content">Yes</span>
-                            </label>
-                            <label class="radio-card">
-                                <input type="radio" name="porting" value="no" checked>
-                                <span class="radio-card-content">No</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Existing HDFC Ergo Customer? <span class="text-error">*</span></label>
-                        <div class="radio-group">
-                            <label class="radio-card">
-                                <input type="radio" name="existingCustomer" value="yes">
-                                <span class="radio-card-content">Yes</span>
-                            </label>
-                            <label class="radio-card">
-                                <input type="radio" name="existingCustomer" value="no" checked>
-                                <span class="radio-card-content">No</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Claim in last 2 years? <span class="text-error">*</span></label>
-                        <div class="radio-group">
-                            <label class="radio-card">
-                                <input type="radio" name="claim" value="yes">
-                                <span class="radio-card-content">Yes</span>
-                            </label>
-                            <label class="radio-card">
-                                <input type="radio" name="claim" value="no" checked>
-                                <span class="radio-card-content">No</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group col-span-2">
-                        <label>Deductible Amount <span class="text-error">*</span></label>
-                        <select name="deductible" class="form-control">
-                            <option value="0">None</option>
+            <!-- Dashboard -->
+            <div class="dashboard-layout fade-in">
+                <!-- Sidebar Adjustments -->
+                <aside class="dashboard-sidebar">
+                    <h3 class="mb-3 font-semibold border-b pb-2">Modifiers & Riders</h3>
+                    
+                    <div class="form-group mb-4">
+                        <label>Deductible Amount</label>
+                        <select name="deductible" id="deductible" class="form-control form-control-sm">
+                            <option value="0" selected>None</option>
                             <option value="10000">₹10,000</option>
                             <option value="25000">₹25,000</option>
                             <option value="50000">₹50,000</option>
@@ -188,75 +103,124 @@
                             <option value="2500000">₹25,00,000</option>
                         </select>
                     </div>
-                </div>
 
-                <div class="btn-actions">
-                    <button type="button" class="btn btn-secondary back-btn">⬅ Back</button>
-                    <button type="button" class="btn btn-primary next-btn">Review ➔</button>
-                </div>
-            </div>
+                    <div class="filter-card mb-4">
+                        <div class="form-group mb-4">
+                            <label for="policyHistory">Policy History</label>
+                            <select id="policyHistory" name="policyHistory" class="form-control form-control-sm" required>
+                                <option value="first_time_buyer" selected>First-time buyer</option>
+                                <option value="1_yr_old_with_claim">1 yr old with claim</option>
+                                <option value="1_yr_old_without_claim">1 yr old without claim</option>
+                                <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
+                                <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
+                                <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
+                            </select>
+                        </div>
 
-            <!-- STEP 3: Review & Calculate -->
-            <div class="form-step hidden" data-step="3">
-                <h2 class="mb-4">Review Details</h2>
-                
-                <div class="glass-card" style="background: var(--surface);">
-                    <div id="inputs-summary">
-                        <!-- Injected by JS -->
-                    </div>
-                </div>
+                        <div class="form-group mb-4">
+                            <label class="toggle-label">
+                                <span>All Insured NRI's?</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" name="nri" id="nri">
+                                    <span class="slider round"></span>
+                                </div>
+                            </label>
+                        </div>
 
-                <div class="btn-actions">
-                    <button type="button" class="btn btn-secondary back-btn">⬅ Back</button>
-                    <button type="button" class="btn btn-primary next-btn" id="calculate-btn">Calculate Premium</button>
-                </div>
-            </div>
+                        <div class="form-group mb-4">
+                            <label class="toggle-label">
+                                <span>Porting Policy?</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" name="porting" id="porting">
+                                    <span class="slider round"></span>
+                                </div>
+                            </label>
+                        </div>
 
-            <!-- STEP 4: Output / Result -->
-            <div class="form-step hidden" data-step="4">
-                <div id="premium-summary-card" style="position: relative;">
-                    <button type="button" id="help-btn" class="help-circle-btn no-pdf" title="Premium Calculation Guide">?</button>
-                    <div class="glass-card mb-4" style="background: var(--surface); padding: 1.5rem; margin-bottom: 1.5rem;">
-                        <h3 class="mb-3" style="border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; font-size: 1.25rem;">Policy & Insured Details</h3>
-                        <div id="final-policy-details" style="font-size: 0.95rem; line-height: 1.6;">
-                            <!-- Injected via JS -->
+                        <div class="form-group mb-4">
+                            <label class="toggle-label">
+                                <span>Existing HDFC Ergo Cust?</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" name="existingCustomer" id="existingCustomer">
+                                    <span class="slider round"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="form-group m-0">
+                            <label class="toggle-label">
+                                <span>Claim in last 2 years?</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" name="claim" id="claim">
+                                    <span class="slider round"></span>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
-                    <h3 class="mb-4">Select Tenure to Compare</h3>
-                    <div id="tenure-cards-container" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <!-- Injected by JS -->
+                    <div class="filter-card">
+                        <h4 class="mb-2 font-semibold text-primary text-sm uppercase tracking-wider">Optima Riders</h4>
+                        <p class="text-xs text-muted mb-4">Only applicable to Optima Secure & Super Secure</p>
+
+                        <div class="form-group mb-4">
+                            <label class="toggle-label">
+                                <span>Unlimited Restore</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" name="unlimitedRestore" id="unlimitedRestore">
+                                    <span class="slider round"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="toggle-label">
+                                <span>Limitless Rider</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" name="limitlessRider" id="limitlessRider">
+                                    <span class="slider round"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="form-group m-0">
+                            <label class="toggle-label">
+                                <span>Optima Wellbeing</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" name="wellbeingRider" id="wellbeingRider">
+                                    <span class="slider round"></span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Main Comparison Table -->
+                <main class="dashboard-content">
+                    <div class="dashboard-header flex justify-between items-center mb-4">
+                        <h2 class="m-0">Premium Quotes Comparison</h2>
+                        <button type="button" id="help-btn" class="help-circle-btn no-pdf" title="Premium Calculation Guide" style="position: static; margin-left: 1rem;">?</button>
                     </div>
 
-                    <h3 class="mb-3">Premium Breakdown</h3>
-                    <div class="glass-card" style="padding: 0; overflow-x: auto; background: var(--surface);">
-                        <table class="breakdown-table">
+                    <div class="table-responsive">
+                        <table class="comparison-table">
                             <thead>
                                 <tr>
-                                    <th>Description</th>
-                                    <th class="text-right">Amount (₹)</th>
+                                    <th>Plan Name</th>
+                                    <th>1 Year</th>
+                                    <th>2 Years</th>
+                                    <th>3 Years</th>
+                                    <th>4 Years</th>
+                                    <th>5 Years</th>
                                 </tr>
                             </thead>
-                            <tbody id="breakdown-table-body">
-                                <!-- Injected via JS -->
+                            <tbody id="comparison-table-body">
+                                <!-- Populated dynamically by JS -->
                             </tbody>
                         </table>
                     </div>
-                </div>
-
-                <div class="btn-actions" style="flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; gap: 1rem;">
-                        <button type="button" class="btn btn-secondary" id="edit-btn">✎ Edit Inputs</button>
-                        <button type="button" class="btn btn-secondary" id="reset-btn">↺ Reset Form</button>
-                    </div>
-                    <div style="display: flex; gap: 1rem;">
-                        <button type="button" class="btn btn-primary" id="download-btn">📄 Download PDF</button>
-                    </div>
-                </div>
+                </main>
             </div>
-
         </form>
-    </div>
 </div>
 
 <!-- Calculation Help Modal -->
@@ -304,7 +268,24 @@
 </div>
 
 <!-- Main App Module -->
-<script type="module" src="./js/app.js?v=2"></script>
-
+<script type="module" src="./js/app.js?v=7"></script>
+<script>
+function togglePlanOptions() {
+    const planType = document.querySelector('input[name="planType"]:checked').value;
+    const optimaRiders = document.getElementById('optima-riders');
+    const hdfcOpts = document.getElementById('hdfc-ergo-options');
+    
+    if (planType === 'super_secure' || planType === 'secure') {
+        optimaRiders.style.display = 'block';
+        hdfcOpts.style.display = 'contents';
+    } else if (planType === 'ab_activ_one_max' || planType === 'ab_activ_yuva') {
+        optimaRiders.style.display = 'none';
+        hdfcOpts.style.display = 'none';
+    } else {
+        optimaRiders.style.display = 'none';
+        hdfcOpts.style.display = 'contents';
+    }
+}
+</script>
 </body>
 </html>

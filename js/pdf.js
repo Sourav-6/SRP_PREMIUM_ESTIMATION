@@ -8,13 +8,14 @@ export function printQuote() {
 }
 
 /**
- * Generates and downloads a PDF of the quote summary.
+ * Generates and downloads a PDF of the target element.
  * Uses html2canvas and jsPDF (assumes they are loaded via CDN).
+ * @param {HTMLElement} targetElement - The element to snapshot
+ * @param {string} fileName - The name of the downloaded file
  */
-export async function downloadPDF() {
-    const summaryCard = document.getElementById('premium-summary-card');
-    if (!summaryCard) {
-        showNotification('Cannot find summary card to download.', 'error');
+export async function downloadPDF(targetElement, fileName = 'Premium-Quote.pdf') {
+    if (!targetElement) {
+        showNotification('Cannot find element to download.', 'error');
         return;
     }
 
@@ -23,10 +24,10 @@ export async function downloadPDF() {
     
     try {
         // Temporarily adjust styles for better PDF rendering
-        const originalStyle = summaryCard.style.cssText;
+        const originalStyle = targetElement.style.cssText;
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        summaryCard.style.padding = '24px';
-        summaryCard.style.backgroundColor = isDark ? '#121212' : '#f5f7fa';
+        targetElement.style.padding = '24px';
+        targetElement.style.backgroundColor = isDark ? '#121212' : '#f5f7fa';
         
         // Save scroll position and scroll to top to prevent html2canvas cropping content below the fold
         const scrollX = window.scrollX;
@@ -34,7 +35,7 @@ export async function downloadPDF() {
         window.scrollTo(0, 0);
 
         // Hide elements not desired in the PDF
-        const noPdfElements = summaryCard.querySelectorAll('.no-pdf');
+        const noPdfElements = targetElement.querySelectorAll('.no-pdf');
         const originalDisplays = Array.from(noPdfElements).map(el => el.style.display);
         noPdfElements.forEach(el => el.style.display = 'none');
 
@@ -46,7 +47,7 @@ export async function downloadPDF() {
         const { jsPDF } = window.jspdf;
 
         // Render to canvas
-        const canvas = await html2canvas(summaryCard, {
+        const canvas = await html2canvas(targetElement, {
             scale: 2, // Higher quality
             useCORS: true,
             logging: false,
@@ -61,7 +62,7 @@ export async function downloadPDF() {
         noPdfElements.forEach((el, idx) => el.style.display = originalDisplays[idx]);
 
         // Restore styles and scroll position immediately
-        summaryCard.style.cssText = originalStyle;
+        targetElement.style.cssText = originalStyle;
         window.scrollTo(scrollX, scrollY);
 
         // Calculate dimensions (Standard PDF width 210mm, height scaled proportionally)
