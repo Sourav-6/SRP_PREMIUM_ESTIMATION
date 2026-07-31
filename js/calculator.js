@@ -20,65 +20,70 @@ export function calculatePremium(inputs, config, rates) {
         return 0.0;
     }
 
-    // 1. Calculate Base Premium per member (including ABCD Loading)
-    let membersWithPremium = members.map(member => {
-        // Find base premium from rates JSON (keys are strings)
-        const siKey = sumInsured.toString();
-        const ageKey = member.age.toString(); 
+    // 1 & 2. Calculate Base Premium per member over the tenure (Age Progression)
+    // Sort members by age descending. Oldest pays 100%, others get 55% discount.
+    let sortedMembers = [...members].sort((a, b) => b.age - a.age);
+    
+    let membersWithPremium = sortedMembers.map((member, index) => {
+        let isPrimary = index === 0;
+        let floaterDiscount = isPrimary ? 0 : rules.floater_subsequent_member;
         
-        let basePrem = 0;
-        if (rates.baseRates[siKey] && rates.baseRates[siKey][ageKey]) {
-            basePrem = rates.baseRates[siKey][ageKey];
-        } else {
-            // Fallback: try highest available age if not found (just in case)
-            const availableAges = Object.keys(rates.baseRates[siKey]).map(Number).sort((a,b)=>a-b);
-            const maxAge = availableAges[availableAges.length - 1];
-            basePrem = rates.baseRates[siKey][maxAge.toString()];
-        }
-
-        // Apply ABCD Chronic loading
-        let abcdLoading = 0;
-        if (member.abcd) {
-            abcdLoading = basePrem * rules.abcd_chronic_loading;
-        }
-
         return {
             ...member,
-            base: basePrem,
-            abcdLoading: abcdLoading,
-            totalBase: basePrem + abcdLoading
+            isPrimary,
+            floaterDiscount,
+            totalBase: 0,
+            floaterPremium: 0,
+            yearPremiums: [] // Store each year's premium for Favourable Claims calculation
         };
     });
 
-    // 2. Floater Discount Logic
-    // Sort members by age descending. Oldest pays 100%, others get 55% discount.
-    membersWithPremium.sort((a, b) => b.age - a.age);
-    
-    let annualFamilyBasePremium = 0;
-    
-    membersWithPremium.forEach((member, index) => {
-        let isPrimary = index === 0;
-        let floaterDiscount = isPrimary ? 0 : rules.floater_subsequent_member; // 55%
-        
-        let finalMemberPrem = Math.round(member.totalBase * (1 - floaterDiscount));
-        member.floaterPremium = finalMemberPrem;
-        annualFamilyBasePremium += finalMemberPrem;
-        
-        // Scale individual base premiums by the selected policy tenure for the breakdown
-        let tenurePremium = finalMemberPrem * tenure;
-        
-        // Add to UI breakdown
+    let totalPremium = 0;
+    const siKey = sumInsured.toString();
+
+    for (let y = 1; y <= tenure; y++) {
+        membersWithPremium.forEach(member => {
+            const currentAge = member.age + (y - 1);
+            const ageKey = currentAge.toString(); 
+            
+            let basePrem = 0;
+            if (rates.baseRates[siKey] && rates.baseRates[siKey][ageKey]) {
+                basePrem = rates.baseRates[siKey][ageKey];
+            } else {
+                // Fallback: try highest available age if not found
+                const availableAges = Object.keys(rates.baseRates[siKey]).map(Number).sort((a,b)=>a-b);
+                const maxAge = availableAges[availableAges.length - 1];
+                basePrem = rates.baseRates[siKey][maxAge.toString()];
+            }
+
+            // Apply ABCD Chronic loading
+            let abcdLoading = 0;
+            if (member.abcd) {
+                abcdLoading = basePrem * rules.abcd_chronic_loading;
+            }
+
+            let totalBaseForYear = basePrem + abcdLoading;
+            let finalMemberPremForYear = Math.round(totalBaseForYear * (1 - member.floaterDiscount));
+            
+            member.totalBase += totalBaseForYear;
+            member.floaterPremium += finalMemberPremForYear;
+            member.yearPremiums.push(finalMemberPremForYear);
+            
+            totalPremium += finalMemberPremForYear;
+        });
+    }
+
+    // Add to UI breakdown
+    membersWithPremium.forEach(member => {
         breakdown.memberBreakdown.push({
             name: member.name || `${member.relation}`,
             age: member.age,
             relation: member.relation,
-            premium: tenurePremium,
-            note: isPrimary ? `(Primary × ${tenure} Yr${tenure > 1 ? 's' : ''})` : `(Floater -${Math.round(floaterDiscount*100)}% × ${tenure} Yr${tenure > 1 ? 's' : ''})`
+            premium: member.floaterPremium,
+            note: member.isPrimary ? `(Primary × ${tenure} Yr${tenure > 1 ? 's' : ''})` : `(Floater -${Math.round(member.floaterDiscount*100)}% × ${tenure} Yr${tenure > 1 ? 's' : ''})`
         });
     });
 
-    // Multi-year total base (before overall policy discounts)
-    let totalPremium = annualFamilyBasePremium * tenure;
     breakdown.totalBasePremium = totalPremium;
     
     let runningPremium = totalPremium;
@@ -156,15 +161,16 @@ export function calculatePremium(inputs, config, rates) {
         runningPremium += claimLoadingAmount;
     }
 
-    // 7. Favourable Claims Discount (for members under 60)
+    // 7. Favourable Claims Discount (for members under 60 at inception)
     let totalClaimsDiscountAmount = 0;
     for (let y = 1; y <= tenure; y++) {
         let r_y = getClaimsDiscountRate(policyHistory, y);
         if (r_y > 0) {
             membersWithPremium.forEach(member => {
                 if (member.age < 60) {
-                    // Apply preceding sequential adjustments to the member's floater premium
-                    let memberPremSeq = member.floaterPremium * (1 - deductibleDiscount) * (1 - nriDiscountPct) * (1 - lifetimeDiscountPct) * (1 - existingDiscountPct) * (1 + claimLoadingPct);
+                    // Apply preceding sequential adjustments to the member's specific year premium
+                    let memberYearPrem = member.yearPremiums[y - 1];
+                    let memberPremSeq = memberYearPrem * (1 - deductibleDiscount) * (1 - nriDiscountPct) * (1 - lifetimeDiscountPct) * (1 - existingDiscountPct) * (1 + claimLoadingPct);
                     totalClaimsDiscountAmount += memberPremSeq * r_y;
                 }
             });
