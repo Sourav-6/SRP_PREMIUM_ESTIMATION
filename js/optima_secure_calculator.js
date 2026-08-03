@@ -73,8 +73,9 @@ export function calculateOptimaSecurePremium(inputs, config, rates) {
                 let discountLabel = member.isPrimary ? 'Primary' : `Floater -${+(member.floaterDiscount * 100).toFixed(0)}%`;
                 let chronicStr = member.chronic ? ' + 25% Chronic' : '';
                 breakdown.memberBreakdown.push({
-                    name: `Base: ${memberLabel} (${discountLabel}${chronicStr} × ${tenure} Yrs)`,
+                    name: `Base Premium: ${memberLabel}`,
                     amount: 0, 
+                    note: `(${discountLabel}${chronicStr} × ${tenure} Yrs)`,
                     type: 'base_premium'
                 });
             }

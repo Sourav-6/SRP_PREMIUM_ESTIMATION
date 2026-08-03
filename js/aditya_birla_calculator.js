@@ -77,11 +77,10 @@ export function calculateAdityaBirlaPremium(inputs, config, rates) {
 
     // Create the breakdown display
     breakdown.memberBreakdown.push({
-        name: `Family (${categoryKey})`,
-        age: eldestAge,
-        relation: 'Group',
-        premium: basePremium,
-        note: `(Based on eldest age: ${eldestAge}, Age Band: ${ageBand})`
+        name: `Base Premium: Family (${categoryKey})`,
+        amount: basePremium,
+        note: `(Based on eldest age: ${eldestAge}, Age Band: ${ageBand})`,
+        type: 'base_premium'
     });
 
     breakdown.totalBasePremium = basePremium;

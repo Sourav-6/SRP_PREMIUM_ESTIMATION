@@ -76,11 +76,10 @@ export function calculatePremium(inputs, config, rates) {
     // Add to UI breakdown
     membersWithPremium.forEach(member => {
         breakdown.memberBreakdown.push({
-            name: member.name || `${member.relation}`,
-            age: member.age,
-            relation: member.relation,
-            premium: member.floaterPremium,
-            note: member.isPrimary ? `(Primary × ${tenure} Yr${tenure > 1 ? 's' : ''})` : `(Floater -${Math.round(member.floaterDiscount*100)}% × ${tenure} Yr${tenure > 1 ? 's' : ''})`
+            name: `Base Premium: ${member.name || member.relation} (Age ${member.age}, ${member.relation})`,
+            amount: member.floaterPremium,
+            note: member.isPrimary ? `(Primary × ${tenure} Yr${tenure > 1 ? 's' : ''})` : `(Floater -${Math.round(member.floaterDiscount*100)}% × ${tenure} Yr${tenure > 1 ? 's' : ''})`,
+            type: 'base_premium'
         });
     });
 

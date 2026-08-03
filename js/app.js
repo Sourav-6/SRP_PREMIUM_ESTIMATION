@@ -234,7 +234,7 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
                 <tbody>
                     ${result.breakdown.memberBreakdown.map(m => `
                         <tr>
-                            <td>Base Premium: ${m.name} (Age ${m.age})</td>
+                            <td>${m.name} ${m.note ? `<span style="font-size: 0.85em; color: var(--text-muted); margin-left: 5px;">${m.note}</span>` : ''}</td>
                             <td>${formatCurrency(m.amount)}</td>
                         </tr>
                     `).join('')}
