@@ -127,19 +127,14 @@ function clearErrors() {
 function getBaseInputs() {
     const form = document.getElementById('calculator-form');
     const formData = new FormData(form);
-    
+    let siRaw = formData.get('sumInsured');
+    let parsedSI = siRaw === 'unlimited' ? 'unlimited' : parseInt(siRaw, 10);
+
     const inputs = {
-        sumInsured: parseInt(formData.get('sumInsured'), 10),
+        sumInsured: parsedSI,
         members: [],
-        nri: formData.get('nri') === 'on',
         deductible: parseInt(formData.get('deductible'), 10),
-        policyHistory: formData.get('policyHistory'),
-        porting: formData.get('porting') === 'on',
-        existingCustomer: formData.get('existingCustomer') === 'on',
-        claim: formData.get('claim') === 'on',
-        unlimitedRestore: formData.get('unlimitedRestore') === 'on',
-        limitlessRider: formData.get('limitlessRider') === 'on',
-        wellbeingRider: formData.get('wellbeingRider') === 'on'
+        paymentMode: formData.get('paymentMode') || 'annual'
     };
 
     const count = parseInt(formData.get('memberCount'), 10);
@@ -162,18 +157,22 @@ function calculateAllQuotes() {
     const allRates = { ...appRates, adityaBirlaRates };
 
     const plans = [
-        { id: 'secure', name: 'Optima Secure', calculator: calculateOptimaSecurePremium, supportedYears: [1, 2, 3, 4, 5] },
-        { id: 'secure_plus', name: 'Optima Secure Plus', calculator: calculatePremium, supportedYears: [1, 2, 3, 4, 5] },
-        { id: 'super_secure', name: 'Optima Super Secure', calculator: calculateSuperSecurePremium, supportedYears: [3] },
-        { id: 'ab_activ_one_max', name: 'Aditya Birla Activ One Max', calculator: calculateAdityaBirlaPremium, supportedYears: [1] },
-        { id: 'ab_activ_yuva', name: 'Aditya Birla Activ Yuva', calculator: calculateAdityaBirlaPremium, supportedYears: [1] }
+        { id: 'secure', prefix: 'optima_secure', name: 'Optima Secure', calculator: calculateOptimaSecurePremium, supportedYears: [1, 2, 3, 4, 5] },
+        { id: 'secure_plus', prefix: 'optima_secure_plus', name: 'Optima Secure Plus', calculator: calculatePremium, supportedYears: [1, 2, 3, 4, 5] },
+        { id: 'super_secure', prefix: 'optima_super_secure', name: 'Optima Super Secure', calculator: calculateSuperSecurePremium, supportedYears: [3] },
+        { id: 'ab_activ_one_max', prefix: 'ab_activ_one_max', name: 'Aditya Birla Activ One Max', calculator: calculateAdityaBirlaPremium, supportedYears: [1] },
+        { id: 'ab_activ_yuva', prefix: 'ab_activ_yuva', name: 'Aditya Birla Activ Yuva', calculator: calculateAdityaBirlaPremium, supportedYears: [1] }
     ];
+
+    let anyPlanValid = false;
 
     plans.forEach(plan => {
         const tr = document.createElement('tr');
         const nameTd = document.createElement('td');
         nameTd.innerHTML = `<strong>${plan.name}</strong>`;
         tr.appendChild(nameTd);
+
+        let hasValidPremium = false;
 
         for (let year = 1; year <= 5; year++) {
             const td = document.createElement('td');
@@ -182,26 +181,98 @@ function calculateAllQuotes() {
                 td.textContent = 'N/A';
             } else {
                 try {
-                    // Override planType dynamically so calculators know which riders/logic apply
-                    const planInputs = { ...inputs, tenure: year, planType: plan.id };
+                    // Extract plan-specific modifiers dynamically
+                    const formData = new FormData(document.getElementById('calculator-form'));
+                    const planInputs = { 
+                        ...inputs, 
+                        tenure: year, 
+                        planType: plan.id,
+                        nri: formData.get(`${plan.prefix}_nri`) === 'on',
+                        policyHistory: formData.get(`${plan.prefix}_policyHistory`) || 'first_time_buyer',
+                        porting: formData.get(`${plan.prefix}_porting`) === 'on',
+                        existingCustomer: formData.get(`${plan.prefix}_existingCustomer`) === 'on',
+                        claim: formData.get(`${plan.prefix}_claim`) === 'on',
+                        unlimitedRestore: formData.get(`${plan.prefix}_unlimitedRestore`) === 'on',
+                        limitlessRider: formData.get(`${plan.prefix}_limitlessRider`) === 'on',
+                        wellbeingRider: formData.get(`${plan.prefix}_wellbeingRider`) === 'on'
+                    };
                     const result = plan.calculator(planInputs, appConfig, allRates);
-                    td.className = 'premium-value';
-                    td.textContent = formatCurrency(result.finalPremium);
+                    td.className = 'premium-value flex-col items-center';
+                    
+                    // Premium
+                    const premiumDiv = document.createElement('div');
+                    premiumDiv.textContent = formatCurrency(result.finalPremium);
+                    td.appendChild(premiumDiv);
+
+                    // EMI Logic
+                    if (inputs.paymentMode === 'loan_emi') {
+                        let downPaymentPct = 0;
+                        let loanTenureMonths = 0;
+                        if (year === 1) {
+                            downPaymentPct = 0.15;
+                            loanTenureMonths = 11;
+                        } else if (year >= 2 && year <= 4) {
+                            downPaymentPct = 0.10;
+                            loanTenureMonths = year === 2 ? 21 : (year === 3 ? 30 : 36);
+                        } else if (year === 5) {
+                            downPaymentPct = 0.05;
+                            loanTenureMonths = 36;
+                        }
+                        
+                        const loanAmount = result.finalPremium;
+                        const downPayment = loanAmount * downPaymentPct;
+                        const emi = (loanAmount - downPayment) * ((1 / loanTenureMonths) + 0.0084);
+                        
+                        const emiDiv = document.createElement('div');
+                        emiDiv.className = 'text-muted mt-1';
+                        emiDiv.style.fontSize = '0.75rem';
+                        emiDiv.style.fontWeight = 'normal';
+                        emiDiv.textContent = `EMI: ${formatCurrency(Math.round(emi))}/mo`;
+                        td.appendChild(emiDiv);
+                        
+                    } else if (inputs.paymentMode === 'monthly_split') {
+                        const emiDiv = document.createElement('div');
+                        emiDiv.className = 'text-muted mt-1';
+                        emiDiv.style.fontSize = '0.75rem';
+                        emiDiv.style.fontWeight = 'normal';
+                        if (year <= 3) {
+                            const splitMonths = year * 12;
+                            const emi = result.finalPremium / splitMonths;
+                            emiDiv.textContent = `Split: ${formatCurrency(Math.round(emi))}/mo`;
+                        } else {
+                            emiDiv.textContent = `Split: N/A`;
+                        }
+                        td.appendChild(emiDiv);
+                    }
                     td.title = 'Click to view breakdown';
                     td.addEventListener('click', () => {
                         toggleBreakdown(tr, td, plan.name, year, result);
                     });
+                    hasValidPremium = true;
                 } catch (e) {
                     td.className = 'premium-na text-error';
                     td.textContent = 'Err';
                     td.title = e.message;
-                    console.error(`Calculation error for ${plan.name} year ${year}:`, e);
+                    // console.error(`Calculation error for ${plan.name} year ${year}:`, e); // Suppress expected errors from console to avoid noise
                 }
             }
             tr.appendChild(td);
         }
-        tbody.appendChild(tr);
+        
+        if (hasValidPremium) {
+            tbody.appendChild(tr);
+            anyPlanValid = true;
+        }
     });
+
+    if (!anyPlanValid) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.className = 'text-center text-muted py-4';
+        td.textContent = 'No plans are available for this specific combination of Sum Insured and family members.';
+        tbody.appendChild(tr);
+    }
 }
 
 function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
@@ -230,7 +301,7 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
                 <h4 class="font-semibold text-primary m-0">${planName} - ${year} Year(s) Breakdown</h4>
                 <button type="button" class="btn btn-primary btn-sm no-pdf download-pdf-btn">⬇ Download PDF</button>
             </div>
-            <table class="breakdown-table">
+            <table class="breakdown-table mb-4">
                 <tbody>
                     ${result.breakdown.memberBreakdown.map(m => `
                         <tr>
@@ -256,6 +327,69 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
                     </tr>
                 </tbody>
             </table>
+            
+            ${(() => {
+                let downPaymentPct = year === 1 ? 0.15 : (year <= 4 ? 0.10 : 0.05);
+                let loanTenureMonths = year === 1 ? 11 : (year === 2 ? 21 : (year === 3 ? 30 : 36));
+                const downPayment = result.finalPremium * downPaymentPct;
+                const loanEmi = (result.finalPremium - downPayment) * ((1 / loanTenureMonths) + 0.0084);
+                const splitEmi = result.finalPremium / (year * 12);
+                
+                // Calculate Processing Fee
+                const calcFee = result.finalPremium * 0.0118;
+                const processingFee = Math.max(354, calcFee);
+                const feeMessage = calcFee < 354 ? 'Minimum ₹354 applied' : 'Calculated at 1.18% of premium';
+                
+                const tooltipHtml = `
+                    <span onclick="const t = this.querySelector('.custom-tooltip'); const isVis = t.style.visibility === 'visible'; document.querySelectorAll('.custom-tooltip').forEach(el => {el.style.visibility='hidden'; el.style.opacity='0';}); if(!isVis) { t.style.visibility='visible'; t.style.opacity='1'; } event.stopPropagation();" 
+                          style="position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--border); color: var(--text-muted); font-size: 11px; font-weight: bold; cursor: pointer; margin-left: 4px;">
+                        ?
+                        <span class="custom-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s; background-color: var(--bg-card); border: 1px solid var(--border); color: var(--text); text-align: center; border-radius: 6px; padding: 6px 10px; position: absolute; z-index: 100; top: 140%; left: 50%; transform: translateX(-50%); font-size: 11px; white-space: nowrap; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            ${feeMessage}
+                            <svg style="position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: -1px;" width="10" height="5" viewBox="0 0 10 5"><polygon points="5,0 0,5 10,5" fill="var(--bg-card)"/></svg>
+                        </span>
+                    </span>
+                `;
+                
+                return `
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <h5 class="font-semibold mb-3 text-sm uppercase tracking-wider text-primary">EMI Options Comparison</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="background: var(--bg-body); padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
+                            <div class="font-semibold text-primary mb-2">Loan EMI</div>
+                            <div class="text-sm flex justify-between mb-1 text-muted"><span>Down Pmt (${downPaymentPct*100}%):</span> <span>${formatCurrency(Math.round(downPayment))}</span></div>
+                            <div class="text-sm flex justify-between mb-1 text-muted"><span>Tenure:</span> <span>${loanTenureMonths} months</span></div>
+                            <div class="font-semibold flex justify-between mt-2 pt-2" style="border-top: 1px dashed var(--border);">
+                                <span>Monthly EMI:</span> 
+                                <span class="text-primary">${formatCurrency(Math.round(loanEmi))}</span>
+                            </div>
+                            <div class="text-sm flex justify-between mt-2 pt-2 text-muted">
+                                <span>Processing Fee ${tooltipHtml}</span>
+                                <span>${formatCurrency(Math.round(processingFee))}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="background: var(--bg-body); padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
+                            <div class="font-semibold text-primary mb-2">Monthly Split</div>
+                            ${year <= 3 ? `
+                                <div class="text-sm flex justify-between mb-1 text-muted"><span>Tenure:</span> <span>${year * 12} months</span></div>
+                                <div class="text-sm flex justify-between mb-1 text-muted"><span>Down Pmt:</span> <span>₹0</span></div>
+                                <div class="font-semibold flex justify-between mt-2 pt-2" style="border-top: 1px dashed var(--border);">
+                                    <span>Monthly EMI:</span> 
+                                    <span class="text-primary">${formatCurrency(Math.round(splitEmi))}</span>
+                                </div>
+                                <div class="text-sm flex justify-between mt-2 pt-2 text-muted">
+                                    <span>Processing Fee ${tooltipHtml}</span>
+                                    <span>${formatCurrency(Math.round(processingFee))}</span>
+                                </div>
+                            ` : `
+                                <div class="text-sm text-muted mt-4 text-center italic">Not applicable for > 3 years.</div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                `;
+            })()}
         </div>
     `;
     bdRow.appendChild(bdCell);

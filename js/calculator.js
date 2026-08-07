@@ -50,10 +50,13 @@ export function calculatePremium(inputs, config, rates) {
             if (rates.baseRates[siKey] && rates.baseRates[siKey][ageKey]) {
                 basePrem = rates.baseRates[siKey][ageKey];
             } else {
-                // Fallback: try highest available age if not found
-                const availableAges = Object.keys(rates.baseRates[siKey]).map(Number).sort((a,b)=>a-b);
-                const maxAge = availableAges[availableAges.length - 1];
-                basePrem = rates.baseRates[siKey][maxAge.toString()];
+                const availableAges = Object.keys(rates.baseRates[siKey] || {}).map(Number).sort((a,b)=>a-b);
+                if (availableAges.length > 0) {
+                    const maxAge = availableAges[availableAges.length - 1];
+                    basePrem = rates.baseRates[siKey][maxAge.toString()];
+                } else {
+                    throw new Error(`Base rates missing for SI ₹${sumInsured}`);
+                }
             }
 
             // Apply ABCD Chronic loading

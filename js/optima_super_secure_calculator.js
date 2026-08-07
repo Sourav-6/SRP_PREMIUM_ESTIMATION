@@ -47,6 +47,8 @@ export function calculateSuperSecurePremium(inputs, config, rates) {
                 if (availableAges.length > 0) {
                     const maxAge = availableAges[availableAges.length - 1];
                     basePrem = rates.baseRates[siKey][maxAge.toString()];
+                } else {
+                    throw new Error(`Base rates missing for SI ₹${sumInsured}`);
                 }
             }
 

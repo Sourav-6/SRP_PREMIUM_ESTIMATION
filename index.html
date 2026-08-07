@@ -46,13 +46,17 @@
                         <label for="sumInsured">Sum Insured <span class="text-error">*</span></label>
                         <select id="sumInsured" name="sumInsured" class="form-control" required>
                             <option value="" disabled selected>Select Sum Insured</option>
+                            <option value="500000">5 Lakhs</option>
+                            <option value="700000">7 Lakhs</option>
                             <option value="1000000">10 Lakhs</option>
                             <option value="1500000">15 Lakhs</option>
                             <option value="2000000">20 Lakhs</option>
                             <option value="2500000">25 Lakhs</option>
                             <option value="5000000">50 Lakhs</option>
+                            <option value="7500000">75 Lakhs</option>
                             <option value="10000000">1 Crore</option>
                             <option value="20000000">2 Crores</option>
+                            <option value="unlimited">Unlimited</option>
                         </select>
                         <span class="error-msg" id="error-sumInsured"></span>
                     </div>
@@ -74,22 +78,9 @@
                         </select>
                         <span class="error-msg" id="error-memberCount"></span>
                     </div>
-                </div>
-
-                <div id="dynamic-members-container" class="mt-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 2.5rem;">
-                    <!-- Cards injected via JS -->
-                </div>
-            </div>
-
-            <!-- Dashboard -->
-            <div class="dashboard-layout fade-in">
-                <!-- Sidebar Adjustments -->
-                <aside class="dashboard-sidebar">
-                    <h3 class="mb-3 font-semibold border-b pb-2">Modifiers & Riders</h3>
-                    
-                    <div class="form-group mb-4">
+                    <div class="form-group">
                         <label>Deductible Amount</label>
-                        <select name="deductible" id="deductible" class="form-control form-control-sm">
+                        <select name="deductible" id="deductible" class="form-control" required>
                             <option value="0" selected>None</option>
                             <option value="10000">₹10,000</option>
                             <option value="25000">₹25,000</option>
@@ -104,95 +95,268 @@
                         </select>
                     </div>
 
-                    <div class="filter-card mb-4">
-                        <div class="form-group mb-4">
-                            <label for="policyHistory">Policy History</label>
-                            <select id="policyHistory" name="policyHistory" class="form-control form-control-sm" required>
-                                <option value="first_time_buyer" selected>First-time buyer</option>
-                                <option value="1_yr_old_with_claim">1 yr old with claim</option>
-                                <option value="1_yr_old_without_claim">1 yr old without claim</option>
-                                <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
-                                <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
-                                <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label class="toggle-label">
-                                <span>All Insured NRI's?</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" name="nri" id="nri">
-                                    <span class="slider round"></span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label class="toggle-label">
-                                <span>Porting Policy?</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" name="porting" id="porting">
-                                    <span class="slider round"></span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="form-group mb-4">
-                            <label class="toggle-label">
-                                <span>Existing HDFC Ergo Cust?</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" name="existingCustomer" id="existingCustomer">
-                                    <span class="slider round"></span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="form-group m-0">
-                            <label class="toggle-label">
-                                <span>Claim in last 2 years?</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" name="claim" id="claim">
-                                    <span class="slider round"></span>
-                                </div>
-                            </label>
-                        </div>
+                    <div class="form-group">
+                        <label>Payment Mode</label>
+                        <select name="paymentMode" id="paymentMode" class="form-control" required>
+                            <option value="annual" selected>Annual (Default)</option>
+                            <option value="loan_emi">Loan EMI</option>
+                            <option value="monthly_split">Monthly Split</option>
+                        </select>
                     </div>
+                </div>
 
-                    <div class="filter-card">
-                        <h4 class="mb-2 font-semibold text-primary text-sm uppercase tracking-wider">Optima Riders</h4>
-                        <p class="text-xs text-muted mb-4">Only applicable to Optima Secure & Super Secure</p>
+                <div id="dynamic-members-container" class="mt-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 2.5rem;">
+                    <!-- Cards injected via JS -->
+                </div>
+            </div>
 
-                        <div class="form-group mb-4">
-                            <label class="toggle-label">
-                                <span>Unlimited Restore</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" name="unlimitedRestore" id="unlimitedRestore">
-                                    <span class="slider round"></span>
-                                </div>
-                            </label>
-                        </div>
+            <!-- Dashboard -->
+            <div class="dashboard-layout fade-in">
+                <!-- Sidebar Adjustments -->
+                <aside class="dashboard-sidebar">
+<h3 class="mb-3 font-semibold border-b pb-2">Plan Specific Settings</h3>
+<div class="filter-card mb-4">
+<h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Optima Secure</h4>
 
-                        <div class="form-group mb-4">
-                            <label class="toggle-label">
-                                <span>Limitless Rider</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" name="limitlessRider" id="limitlessRider">
-                                    <span class="slider round"></span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="form-group m-0">
-                            <label class="toggle-label">
-                                <span>Optima Wellbeing</span>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" name="wellbeingRider" id="wellbeingRider">
-                                    <span class="slider round"></span>
-                                </div>
-                            </label>
-                        </div>
+            <div class="form-group mb-4">
+                <label for="optima_secure_policyHistory" style="font-size: 0.85rem;">Policy History</label>
+                <select id="optima_secure_policyHistory" name="optima_secure_policyHistory" class="form-control form-control-sm">
+                    <option value="first_time_buyer" selected>First-time buyer</option>
+                    <option value="1_yr_old_with_claim">1 yr old with claim</option>
+                    <option value="1_yr_old_without_claim">1 yr old without claim</option>
+                    <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
+                    <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
+                    <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
+                </select>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">All Insured NRI's?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_nri" id="optima_secure_nri">
+                        <span class="slider round"></span>
                     </div>
-                </aside>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Porting Policy?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_porting" id="optima_secure_porting">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Existing HDFC Ergo Cust?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_existingCustomer" id="optima_secure_existingCustomer">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Claim in last 2 years?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_claim" id="optima_secure_claim">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="mt-4 pt-3 border-t">
+                <p class="text-xs font-semibold text-muted mb-2 uppercase">Riders</p>
+                
+                <div class="form-group mb-3">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Unlimited Restore</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_secure_unlimitedRestore" id="optima_secure_unlimitedRestore">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Limitless Rider</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_secure_limitlessRider" id="optima_secure_limitlessRider">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="form-group m-0">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Optima Wellbeing</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_secure_wellbeingRider" id="optima_secure_wellbeingRider">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            </div>
+<div class="filter-card mb-4">
+<h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Optima Secure Plus</h4>
+
+            <div class="form-group mb-4">
+                <label for="optima_secure_plus_policyHistory" style="font-size: 0.85rem;">Policy History</label>
+                <select id="optima_secure_plus_policyHistory" name="optima_secure_plus_policyHistory" class="form-control form-control-sm">
+                    <option value="first_time_buyer" selected>First-time buyer</option>
+                    <option value="1_yr_old_with_claim">1 yr old with claim</option>
+                    <option value="1_yr_old_without_claim">1 yr old without claim</option>
+                    <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
+                    <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
+                    <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
+                </select>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">All Insured NRI's?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_plus_nri" id="optima_secure_plus_nri">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Porting Policy?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_plus_porting" id="optima_secure_plus_porting">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Existing HDFC Ergo Cust?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_plus_existingCustomer" id="optima_secure_plus_existingCustomer">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Claim in last 2 years?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_secure_plus_claim" id="optima_secure_plus_claim">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            </div>
+<div class="filter-card mb-4">
+<h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Optima Super Secure</h4>
+
+            <div class="form-group mb-4">
+                <label for="optima_super_secure_policyHistory" style="font-size: 0.85rem;">Policy History</label>
+                <select id="optima_super_secure_policyHistory" name="optima_super_secure_policyHistory" class="form-control form-control-sm">
+                    <option value="first_time_buyer" selected>First-time buyer</option>
+                    <option value="1_yr_old_with_claim">1 yr old with claim</option>
+                    <option value="1_yr_old_without_claim">1 yr old without claim</option>
+                    <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
+                    <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
+                    <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
+                </select>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">All Insured NRI's?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_super_secure_nri" id="optima_super_secure_nri">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Porting Policy?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_super_secure_porting" id="optima_super_secure_porting">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Existing HDFC Ergo Cust?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_super_secure_existingCustomer" id="optima_super_secure_existingCustomer">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label class="toggle-label">
+                    <span style="font-size: 0.85rem;">Claim in last 2 years?</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" name="optima_super_secure_claim" id="optima_super_secure_claim">
+                        <span class="slider round"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="mt-4 pt-3 border-t">
+                <p class="text-xs font-semibold text-muted mb-2 uppercase">Riders</p>
+                
+                <div class="form-group mb-3">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Unlimited Restore</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_super_secure_unlimitedRestore" id="optima_super_secure_unlimitedRestore">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Limitless Rider</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_super_secure_limitlessRider" id="optima_super_secure_limitlessRider">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="form-group m-0">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Optima Wellbeing</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_super_secure_wellbeingRider" id="optima_super_secure_wellbeingRider">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            </div>
+<div class="filter-card mb-4">
+<h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Aditya Birla Activ One Max</h4>
+<p class="text-sm text-muted m-0 text-center py-3">No modifiers available</p>
+</div>
+<div class="filter-card mb-4">
+<h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Aditya Birla Activ Yuva</h4>
+<p class="text-sm text-muted m-0 text-center py-3">No modifiers available</p>
+</div>
+</aside>
 
                 <!-- Main Comparison Table -->
                 <main class="dashboard-content">
