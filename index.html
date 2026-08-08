@@ -62,20 +62,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="memberCount">Number of Members <span class="text-error">*</span></label>
-                        <select id="memberCount" name="memberCount" class="form-control" required>
-                            <option value="" disabled selected>Select members (1-10)</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                        </select>
+                        <label for="memberAges">Family Member Ages <span class="text-error">*</span></label>
+                        <input type="text" id="memberAges" name="memberAges" class="form-control" placeholder="e.g. 55, 45, 15, 10" required>
+                        <input type="hidden" id="memberCount" name="memberCount" value="">
                         <span class="error-msg" id="error-memberCount"></span>
                     </div>
                     <div class="form-group">
@@ -98,8 +87,7 @@
                     <div class="form-group">
                         <label>Payment Mode</label>
                         <select name="paymentMode" id="paymentMode" class="form-control" required>
-                            <option value="annual" selected>Annual (Default)</option>
-                            <option value="loan_emi">Loan EMI</option>
+                            <option value="loan_emi" selected>Loan EMI</option>
                             <option value="monthly_split">Monthly Split</option>
                         </select>
                     </div>
@@ -257,6 +245,40 @@
                         <span class="slider round"></span>
                     </div>
                 </label>
+            </div>
+
+            <div class="mt-4 pt-3 border-t">
+                <p class="text-xs font-semibold text-muted mb-2 uppercase">Riders</p>
+                
+                <div class="form-group mb-3">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Unlimited Restore</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_secure_plus_unlimitedRestore" id="optima_secure_plus_unlimitedRestore">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Limitless Rider</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_secure_plus_limitlessRider" id="optima_secure_plus_limitlessRider">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="form-group m-0">
+                    <label class="toggle-label">
+                        <span style="font-size: 0.85rem;">Optima Wellbeing</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" name="optima_secure_plus_wellbeingRider" id="optima_secure_plus_wellbeingRider">
+                            <span class="slider round"></span>
+                        </div>
+                    </label>
+                </div>
             </div>
             </div>
 <div class="filter-card mb-4">
@@ -427,6 +449,55 @@
                 <h4>8. Long Term Discount</h4>
                 <p>Applied at the end of the calculation sequence: <strong>6% discount</strong> for 2-year tenure, or <strong>8% discount</strong> for 3 to 5 years tenure.</p>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help / Premium Calculation Guide Modal -->
+<div id="help-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Premium Calculation & Discount Guide</h3>
+            <button type="button" class="close-btn" id="close-help-modal">&times;</button>
+        </div>
+        <div class="modal-body" style="font-size: 0.95rem; line-height: 1.6; color: var(--text);">
+            <p class="mb-3">This guide details how base rates, floater discounts, rider surcharges, and long-term tenure discounts are calculated.</p>
+            
+            <h4 class="font-semibold text-primary mt-3 mb-1">1. Member Base Rates & Floater Discounts</h4>
+            <ul style="padding-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+                <li><strong>Primary Member (Self / Eldest):</strong> 100% of applicable base rate for age band.</li>
+                <li><strong>Spouse / 2nd Adult:</strong> <strong>-55% Floater Discount</strong> (pays 45% of base rate).</li>
+                <li><strong>Children (up to 4):</strong> <strong>-50% to -65% Floater Discount</strong> per child depending on plan.</li>
+            </ul>
+
+            <h4 class="font-semibold text-primary mt-3 mb-1">2. Deductible Discounts</h4>
+            <ul style="padding-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+                <li>Voluntary deductible choices (e.g. ₹10k, ₹25k, ₹50k, ₹1L - ₹25L).</li>
+                <li>Saves up to <strong>-40% to -65%</strong> on total base premium depending on Sum Insured and Deductible selected.</li>
+            </ul>
+
+            <h4 class="font-semibold text-primary mt-3 mb-1">3. Policy History & Loyalty Discounts</h4>
+            <ul style="padding-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+                <li><strong>Existing HDFC Ergo Customer:</strong> <strong>-5% Loyalty Discount</strong></li>
+                <li><strong>Claim-Free History:</strong> Up to <strong>-10% Favourable Claims Discount</strong> for policy continuity without claims.</li>
+            </ul>
+
+            <h4 class="font-semibold text-primary mt-3 mb-1">4. Rider Surcharges (% of Base)</h4>
+            <ul style="padding-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+                <li><strong>Unlimited Restore Rider:</strong> <strong>+2.5% to +3%</strong> of Base Premium</li>
+                <li><strong>Limitless Rider:</strong> <strong>+12.5%</strong> of Base Premium</li>
+                <li><strong>Optima Wellbeing Rider:</strong> <strong>+6.0%</strong> of Base Premium</li>
+            </ul>
+
+            <h4 class="font-semibold text-primary mt-3 mb-1">5. Long-Term Tenure Discounts</h4>
+            <ul style="padding-left: 1.2rem; margin-bottom: 1rem; color: var(--text-muted);">
+                <li><strong>2 Years Tenure:</strong> <strong>-7.5% to -8.0%</strong> Discount on annual premium</li>
+                <li><strong>3 Years Tenure:</strong> <strong>-8.0% to -10.0%</strong> Discount on annual premium</li>
+                <li><strong>4 & 5 Years Tenure:</strong> <strong>-10.0% to -12.0%</strong> Discount on annual premium</li>
+            </ul>
+
+            <h4 class="font-semibold text-primary mt-3 mb-1">6. GST</h4>
+            <p style="color: var(--text-muted); margin-bottom: 0;">Standard mandatory <strong>18% GST</strong> is added to the net premium after all discounts and riders.</p>
         </div>
     </div>
 </div>

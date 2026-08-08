@@ -19,8 +19,8 @@ export function validateInputs(formData) {
         const age = parseInt(ageField, 10);
         if (!ageField || isNaN(age) || age < 1) {
             errors.push({ field: `memberAge_${i}`, message: 'Age is required and must be a valid number.' });
-        } else if (age > 90) {
-            errors.push({ field: `memberAge_${i}`, message: 'Maximum eligible age is 90 years.' });
+        } else if (age > 100) {
+            errors.push({ field: `memberAge_${i}`, message: 'Maximum eligible age is 100 years.' });
         }
     }
 

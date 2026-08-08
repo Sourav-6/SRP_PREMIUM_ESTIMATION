@@ -4,7 +4,7 @@
  */
 
 export function calculatePremium(inputs, config, rates) {
-    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim } = inputs;
+    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim, limitlessRider } = inputs;
     const rules = rates.discountRules;
     const breakdown = { adjustments: [], memberBreakdown: [] };
     
@@ -148,6 +148,26 @@ export function calculatePremium(inputs, config, rates) {
             type: 'discount_amount' 
         });
         runningPremium -= lifetimeDiscountAmount;
+    }
+
+    // Limitless Rider Loading (SI >= 10L)
+    let limitlessLoadingPct = 0.0;
+    if (limitlessRider) {
+        if (sumInsured >= 1000000 && sumInsured <= 2500000) limitlessLoadingPct = 0.10;
+        else if (sumInsured === 5000000) limitlessLoadingPct = 0.06;
+        else if (sumInsured === 7500000) limitlessLoadingPct = 0.03;
+        else if (sumInsured === 10000000) limitlessLoadingPct = 0.025;
+        else if (sumInsured >= 20000000) limitlessLoadingPct = 0.015;
+        
+        if (limitlessLoadingPct > 0) {
+            let limitlessLoadingAmount = Math.round(runningPremium * limitlessLoadingPct);
+            breakdown.adjustments.push({ 
+                name: `Limitless Rider Loading (+${+(limitlessLoadingPct * 100).toFixed(1)}%)`, 
+                amount: limitlessLoadingAmount, 
+                type: 'surcharge_amount' 
+            });
+            runningPremium += limitlessLoadingAmount;
+        }
     }
 
     // Porting Discount removed

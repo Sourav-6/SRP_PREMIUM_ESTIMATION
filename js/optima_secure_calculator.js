@@ -57,7 +57,8 @@ export function calculateOptimaSecurePremium(inputs, config, rates) {
 
             // Apply ABCD Chronic loading
             let abcdLoading = 0;
-            if (member.chronic) {
+            const hasAbcd = member.abcd || member.chronic;
+            if (hasAbcd) {
                 abcdLoading = basePrem * (rules.abcd_chronic_loading || 0.25);
             }
             let finalBase = basePrem + abcdLoading;
@@ -73,7 +74,7 @@ export function calculateOptimaSecurePremium(inputs, config, rates) {
                 let relationLabel = member.relation;
                 let memberLabel = `${member.name} (Age ${member.age}, ${relationLabel})`;
                 let discountLabel = member.isPrimary ? 'Primary' : `Floater -${+(member.floaterDiscount * 100).toFixed(0)}%`;
-                let chronicStr = member.chronic ? ' + 25% Chronic' : '';
+                let chronicStr = hasAbcd ? ' + 25% ABCD Care' : '';
                 breakdown.memberBreakdown.push({
                     name: `Base Premium: ${memberLabel}`,
                     amount: 0, 

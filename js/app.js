@@ -26,39 +26,105 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     initMemberDynamicFields();
     initThemeToggle();
+    initHelpModal();
+    initSyncPolicySettings();
     initAutoCalculate();
 });
 
+function initHelpModal() {
+    const helpBtn = document.getElementById('help-btn');
+    const helpModal = document.getElementById('help-modal');
+    const closeHelpModal = document.getElementById('close-help-modal');
+
+    if (helpBtn && helpModal) {
+        helpBtn.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+    }
+
+    if (closeHelpModal && helpModal) {
+        closeHelpModal.addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+    }
+
+    if (helpModal) {
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.add('hidden');
+            }
+        });
+    }
+}
+
 function initMemberDynamicFields() {
-    const memberSelect = document.getElementById('memberCount');
+    const memberAgesInput = document.getElementById('memberAges');
+    const hiddenMemberCount = document.getElementById('memberCount');
     const container = document.getElementById('dynamic-members-container');
 
-    memberSelect.addEventListener('change', (e) => {
-        const count = parseInt(e.target.value, 10);
+    if (!memberAgesInput || !container) return;
+
+    const parseAndRenderMembers = () => {
+        const rawVal = memberAgesInput.value || '';
+        const ages = rawVal
+            .split(',')
+            .map(s => parseInt(s.trim(), 10))
+            .filter(n => !isNaN(n) && n > 0 && n <= 100);
+
+        if (ages.length === 0) {
+            container.innerHTML = '';
+            if (hiddenMemberCount) hiddenMemberCount.value = '';
+            return;
+        }
+
+        const validAges = ages.slice(0, 10);
+        if (hiddenMemberCount) hiddenMemberCount.value = validAges.length;
+
         container.innerHTML = '';
 
-        if (!count || isNaN(count)) return;
-
-        for (let i = 1; i <= count; i++) {
+        validAges.forEach((age, idx) => {
+            const i = idx + 1;
             const row = document.createElement('div');
             row.className = 'flex items-center gap-4 p-3 rounded-lg border slide-in';
             row.style.animationDelay = `${i * 50}ms`;
             row.style.background = 'var(--glass-bg)';
             row.style.borderColor = 'var(--border)';
-            
+
+            // Smart relation detection
+            let relation = 'Self';
+            if (idx === 1) {
+                if (validAges[1] >= 18 && Math.abs(validAges[0] - validAges[1]) <= 25) {
+                    relation = 'Spouse';
+                } else if (validAges[1] >= validAges[0] + 15) {
+                    relation = 'Father';
+                } else if (validAges[1] < validAges[0] - 15) {
+                    relation = 'Child';
+                } else {
+                    relation = 'Spouse';
+                }
+            } else if (idx >= 2) {
+                if (validAges[idx] < validAges[0] - 12 || validAges[idx] < 25) {
+                    relation = 'Child';
+                } else if (validAges[idx] >= validAges[0] + 15) {
+                    relation = idx % 2 === 0 ? 'Father' : 'Mother';
+                } else {
+                    relation = 'Child';
+                }
+            }
+
             row.innerHTML = `
                 <div class="font-semibold text-primary" style="width: 85px; white-space: nowrap;">Member ${i}</div>
                 <div class="flex-1">
-                    <input type="number" name="memberAge_${i}" min="1" max="120" required class="form-control form-control-sm" style="padding: 0.5rem;" placeholder="Age">
+                    <input type="number" name="memberAge_${i}" value="${age}" min="1" max="120" required class="form-control form-control-sm" style="padding: 0.5rem;" placeholder="Age">
                     <span class="error-msg" id="error-memberAge_${i}" style="display:none; font-size: 0.75rem; color: var(--error);"></span>
                 </div>
                 <div class="flex-1">
                     <select name="memberRelation_${i}" class="form-control form-control-sm" style="padding: 0.5rem;" required>
-                        <option value="Self" ${i === 1 ? 'selected' : ''}>Self</option>
-                        <option value="Spouse" ${i === 2 ? 'selected' : ''}>Spouse</option>
-                        <option value="Child" ${i > 2 ? 'selected' : ''}>Child</option>
-                        <option value="Father">Father</option>
-                        <option value="Mother">Mother</option>
+                        <option value="Self" ${relation === 'Self' ? 'selected' : ''}>Self</option>
+                        <option value="Spouse" ${relation === 'Spouse' ? 'selected' : ''}>Spouse</option>
+                        <option value="Child" ${relation === 'Child' ? 'selected' : ''}>Child</option>
+                        <option value="Father" ${relation === 'Father' ? 'selected' : ''}>Father</option>
+                        <option value="Mother" ${relation === 'Mother' ? 'selected' : ''}>Mother</option>
                     </select>
                 </div>
                 <div class="flex items-center gap-2" style="width: 95px;">
@@ -66,31 +132,100 @@ function initMemberDynamicFields() {
                     <label for="abcd_${i}" class="m-0 cursor-pointer text-xs font-medium" style="white-space: nowrap;">ABCD Care</label>
                 </div>
             `;
-            // Do not wrap so it stays strictly on one line
             container.appendChild(row);
+        });
+    };
+
+    memberAgesInput.addEventListener('input', parseAndRenderMembers);
+    memberAgesInput.addEventListener('change', parseAndRenderMembers);
+
+    parseAndRenderMembers();
+}
+
+function initSyncPolicySettings() {
+    const form = document.getElementById('calculator-form');
+    
+    // Common settings suffixes to synchronize across policy sections
+    const linkedSuffixes = [
+        'policyHistory',
+        'nri',
+        'porting',
+        'existingCustomer',
+        'claim',
+        'unlimitedRestore',
+        'limitlessRider',
+        'wellbeingRider'
+    ];
+
+    form.addEventListener('change', (e) => {
+        const target = e.target;
+        if (!target || !target.name) return;
+
+        for (const suffix of linkedSuffixes) {
+            if (target.name.endsWith(`_${suffix}`) || target.name === suffix) {
+                const isCheckbox = target.type === 'checkbox';
+                const selector = `[name$="_${suffix}"]`;
+                const matchingInputs = form.querySelectorAll(selector);
+
+                matchingInputs.forEach(input => {
+                    if (input !== target) {
+                        if (isCheckbox) {
+                            input.checked = target.checked;
+                        } else {
+                            input.value = target.value;
+                        }
+                    }
+                });
+                break;
+            }
         }
     });
+}
 
-    if (memberSelect.value) {
-        memberSelect.dispatchEvent(new Event('change'));
-    }
+function updateLimitlessRiderState() {
+    const form = document.getElementById('calculator-form');
+    if (!form) return;
+    const formData = new FormData(form);
+    const siRaw = formData.get('sumInsured');
+    const parsedSI = siRaw === 'unlimited' ? 100000000 : parseInt(siRaw, 10);
+
+    const isBelow10L = isNaN(parsedSI) || parsedSI < 1000000;
+    const limitlessToggles = form.querySelectorAll('[name$="_limitlessRider"]');
+
+    limitlessToggles.forEach(toggle => {
+        const formGroup = toggle.closest('.form-group') || toggle.closest('.toggle-label');
+        if (isBelow10L) {
+            if (toggle.checked) toggle.checked = false;
+            toggle.disabled = true;
+            if (formGroup) {
+                formGroup.style.opacity = '0.5';
+                formGroup.style.pointerEvents = 'none';
+            }
+        } else {
+            toggle.disabled = false;
+            if (formGroup) {
+                formGroup.style.opacity = '1';
+                formGroup.style.pointerEvents = 'auto';
+            }
+        }
+    });
 }
 
 function initAutoCalculate() {
     const form = document.getElementById('calculator-form');
     
-    // Listen to all changes inside the form
-    form.addEventListener('input', () => {
+    const handleUpdate = () => {
+        updateLimitlessRiderState();
         if (validateSetup(false)) {
             calculateAllQuotes();
         }
-    });
+    };
 
-    form.addEventListener('change', () => {
-        if (validateSetup(false)) {
-            calculateAllQuotes();
-        }
-    });
+    // Listen to all changes inside the form
+    form.addEventListener('input', handleUpdate);
+    form.addEventListener('change', handleUpdate);
+
+    updateLimitlessRiderState();
 }
 
 function validateSetup() {
@@ -134,7 +269,7 @@ function getBaseInputs() {
         sumInsured: parsedSI,
         members: [],
         deductible: parseInt(formData.get('deductible'), 10),
-        paymentMode: formData.get('paymentMode') || 'annual'
+        paymentMode: formData.get('paymentMode') || 'loan_emi'
     };
 
     const count = parseInt(formData.get('memberCount'), 10);
@@ -204,45 +339,48 @@ function calculateAllQuotes() {
                     premiumDiv.textContent = formatCurrency(result.finalPremium);
                     td.appendChild(premiumDiv);
 
-                    // EMI Logic
-                    if (inputs.paymentMode === 'loan_emi') {
-                        let downPaymentPct = 0;
-                        let loanTenureMonths = 0;
-                        if (year === 1) {
-                            downPaymentPct = 0.15;
-                            loanTenureMonths = 11;
-                        } else if (year >= 2 && year <= 4) {
-                            downPaymentPct = 0.10;
-                            loanTenureMonths = year === 2 ? 21 : (year === 3 ? 30 : 36);
-                        } else if (year === 5) {
-                            downPaymentPct = 0.05;
-                            loanTenureMonths = 36;
+                    // EMI Logic (Not applicable for Aditya Birla plans)
+                    const isAdityaBirla = plan.id.startsWith('ab_');
+                    if (!isAdityaBirla) {
+                        if (inputs.paymentMode === 'loan_emi') {
+                            let downPaymentPct = 0;
+                            let loanTenureMonths = 0;
+                            if (year === 1) {
+                                downPaymentPct = 0.15;
+                                loanTenureMonths = 11;
+                            } else if (year >= 2 && year <= 4) {
+                                downPaymentPct = 0.10;
+                                loanTenureMonths = year === 2 ? 21 : (year === 3 ? 30 : 36);
+                            } else if (year === 5) {
+                                downPaymentPct = 0.05;
+                                loanTenureMonths = 36;
+                            }
+                            
+                            const loanAmount = result.finalPremium;
+                            const downPayment = loanAmount * downPaymentPct;
+                            const emi = (loanAmount - downPayment) * ((1 / loanTenureMonths) + 0.0084);
+                            
+                            const emiDiv = document.createElement('div');
+                            emiDiv.className = 'text-muted mt-1';
+                            emiDiv.style.fontSize = '0.75rem';
+                            emiDiv.style.fontWeight = 'normal';
+                            emiDiv.textContent = `EMI: ${formatCurrency(Math.round(emi))}/mo`;
+                            td.appendChild(emiDiv);
+                            
+                        } else if (inputs.paymentMode === 'monthly_split') {
+                            const emiDiv = document.createElement('div');
+                            emiDiv.className = 'text-muted mt-1';
+                            emiDiv.style.fontSize = '0.75rem';
+                            emiDiv.style.fontWeight = 'normal';
+                            if (year <= 3) {
+                                const splitMonths = year * 12;
+                                const emi = result.finalPremium / splitMonths;
+                                emiDiv.textContent = `Split: ${formatCurrency(Math.round(emi))}/mo`;
+                            } else {
+                                emiDiv.textContent = `Split: N/A`;
+                            }
+                            td.appendChild(emiDiv);
                         }
-                        
-                        const loanAmount = result.finalPremium;
-                        const downPayment = loanAmount * downPaymentPct;
-                        const emi = (loanAmount - downPayment) * ((1 / loanTenureMonths) + 0.0084);
-                        
-                        const emiDiv = document.createElement('div');
-                        emiDiv.className = 'text-muted mt-1';
-                        emiDiv.style.fontSize = '0.75rem';
-                        emiDiv.style.fontWeight = 'normal';
-                        emiDiv.textContent = `EMI: ${formatCurrency(Math.round(emi))}/mo`;
-                        td.appendChild(emiDiv);
-                        
-                    } else if (inputs.paymentMode === 'monthly_split') {
-                        const emiDiv = document.createElement('div');
-                        emiDiv.className = 'text-muted mt-1';
-                        emiDiv.style.fontSize = '0.75rem';
-                        emiDiv.style.fontWeight = 'normal';
-                        if (year <= 3) {
-                            const splitMonths = year * 12;
-                            const emi = result.finalPremium / splitMonths;
-                            emiDiv.textContent = `Split: ${formatCurrency(Math.round(emi))}/mo`;
-                        } else {
-                            emiDiv.textContent = `Split: N/A`;
-                        }
-                        td.appendChild(emiDiv);
                     }
                     td.title = 'Click to view breakdown';
                     td.addEventListener('click', () => {
@@ -270,7 +408,7 @@ function calculateAllQuotes() {
         const td = document.createElement('td');
         td.colSpan = 6;
         td.className = 'text-center text-muted py-4';
-        td.textContent = 'No plans are available for this specific combination of Sum Insured and family members.';
+        td.textContent = 'Please enter family member ages (e.g. 55, 45, 15, 10) above to calculate premium quotes.';
         tbody.appendChild(tr);
     }
 }
@@ -329,61 +467,119 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
             </table>
             
             ${(() => {
+                if (planName.includes('Aditya Birla')) {
+                    return `
+                    <div style="background: var(--bg-card); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <h5 class="font-semibold mb-2 text-xs uppercase tracking-wider text-primary">EMI Options Comparison</h5>
+                        <div class="text-sm text-muted italic">EMI payment options are not available for Aditya Birla plans. Only Annual payment is supported.</div>
+                    </div>
+                    `;
+                }
+
                 let downPaymentPct = year === 1 ? 0.15 : (year <= 4 ? 0.10 : 0.05);
                 let loanTenureMonths = year === 1 ? 11 : (year === 2 ? 21 : (year === 3 ? 30 : 36));
                 const downPayment = result.finalPremium * downPaymentPct;
-                const loanEmi = (result.finalPremium - downPayment) * ((1 / loanTenureMonths) + 0.0084);
-                const splitEmi = result.finalPremium / (year * 12);
                 
-                // Calculate Processing Fee
+                // Calculate Loan EMI
                 const calcFee = result.finalPremium * 0.0118;
                 const processingFee = Math.max(354, calcFee);
                 const feeMessage = calcFee < 354 ? 'Minimum ₹354 applied' : 'Calculated at 1.18% of premium';
+                
+                const loanEmi = (result.finalPremium - downPayment) * ((1 / loanTenureMonths) + 0.0084);
+                const payNow = downPayment + processingFee;
+                const loanTotalPayable = payNow + (loanEmi * loanTenureMonths);
+                
+                // Monthly Split EMI (No processing fee, no down payment)
+                const splitEmi = result.finalPremium / (year * 12);
+                const splitTotalPayable = result.finalPremium;
                 
                 const tooltipHtml = `
                     <span onclick="const t = this.querySelector('.custom-tooltip'); const isVis = t.style.visibility === 'visible'; document.querySelectorAll('.custom-tooltip').forEach(el => {el.style.visibility='hidden'; el.style.opacity='0';}); if(!isVis) { t.style.visibility='visible'; t.style.opacity='1'; } event.stopPropagation();" 
                           style="position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--border); color: var(--text-muted); font-size: 11px; font-weight: bold; cursor: pointer; margin-left: 4px;">
                         ?
-                        <span class="custom-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s; background-color: var(--bg-card); border: 1px solid var(--border); color: var(--text); text-align: center; border-radius: 6px; padding: 6px 10px; position: absolute; z-index: 100; top: 140%; left: 50%; transform: translateX(-50%); font-size: 11px; white-space: nowrap; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <span class="custom-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s; background-color: var(--bg-card); border: 1px solid var(--border); color: var(--text); text-align: center; border-radius: 6px; padding: 4px 8px; position: absolute; z-index: 100; left: 140%; top: 50%; transform: translateY(-50%); font-size: 11px; white-space: nowrap; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                             ${feeMessage}
-                            <svg style="position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: -1px;" width="10" height="5" viewBox="0 0 10 5"><polygon points="5,0 0,5 10,5" fill="var(--bg-card)"/></svg>
+                            <svg style="position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: -1px;" width="5" height="10" viewBox="0 0 5 10"><polygon points="0,5 5,0 5,10" fill="var(--bg-card)"/></svg>
                         </span>
                     </span>
                 `;
                 
                 return `
-                <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
-                    <h5 class="font-semibold mb-3 text-sm uppercase tracking-wider text-primary">EMI Options Comparison</h5>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div style="background: var(--bg-body); padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
-                            <div class="font-semibold text-primary mb-2">Loan EMI</div>
-                            <div class="text-sm flex justify-between mb-1 text-muted"><span>Down Pmt (${downPaymentPct*100}%):</span> <span>${formatCurrency(Math.round(downPayment))}</span></div>
-                            <div class="text-sm flex justify-between mb-1 text-muted"><span>Tenure:</span> <span>${loanTenureMonths} months</span></div>
-                            <div class="font-semibold flex justify-between mt-2 pt-2" style="border-top: 1px dashed var(--border);">
-                                <span>Monthly EMI:</span> 
-                                <span class="text-primary">${formatCurrency(Math.round(loanEmi))}</span>
+                <div style="background: var(--bg-card); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <h5 class="font-semibold mb-3 text-xs uppercase tracking-wider text-primary">EMI Options Comparison</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+                        <!-- Loan EMI Card -->
+                        <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Loan EMI</div>
+                                
+                                <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2">Upfront Charges</div>
+                                <div class="text-sm flex justify-between mb-1.5 text-muted">
+                                    <span>Down Payment (${downPaymentPct*100}%):</span>
+                                    <span class="font-medium text-text">${formatCurrency(Math.round(downPayment))}</span>
+                                </div>
+                                <div class="text-sm flex justify-between mb-3 text-muted">
+                                    <span>Processing Fee: ${tooltipHtml}</span>
+                                    <span class="font-medium text-text">${formatCurrency(Math.round(processingFee))}</span>
+                                </div>
+
+                                <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2 pt-2" style="border-top: 1px dashed var(--border);">Repayment Terms</div>
+                                <div class="text-sm flex justify-between mb-1.5 text-muted">
+                                    <span>Loan Tenure:</span>
+                                    <span class="font-medium text-text">${loanTenureMonths} months</span>
+                                </div>
+                                <div class="text-sm flex justify-between mb-3">
+                                    <span class="font-semibold text-muted">Monthly EMI:</span>
+                                    <span class="font-bold text-primary">${formatCurrency(Math.round(loanEmi))} / mo</span>
+                                </div>
+
+                                <div class="text-sm flex justify-between pt-2 mb-4" style="border-top: 1px solid var(--border);">
+                                    <span class="font-semibold text-muted">Total Amount Payable:</span>
+                                    <span class="font-bold text-text">${formatCurrency(Math.round(loanTotalPayable))}</span>
+                                </div>
                             </div>
-                            <div class="text-sm flex justify-between mt-2 pt-2 text-muted">
-                                <span>Processing Fee ${tooltipHtml}</span>
-                                <span>${formatCurrency(Math.round(processingFee))}</span>
-                            </div>
+
+                            <button type="button" class="btn btn-primary no-pdf pay-now-btn" 
+                                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 86, 219, 0.25);"
+                                    onclick="event.stopPropagation(); alert('Proceeding to payment for Pay Now amount: ${formatCurrency(Math.round(payNow))}')">
+                                <span>Pay Now (Upfront)</span> 
+                                <span style="font-size: 1rem; font-weight: 700;">${formatCurrency(Math.round(payNow))}</span>
+                            </button>
                         </div>
                         
-                        <div style="background: var(--bg-body); padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
-                            <div class="font-semibold text-primary mb-2">Monthly Split</div>
+                        <!-- Monthly Split Card -->
+                        <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
                             ${year <= 3 ? `
-                                <div class="text-sm flex justify-between mb-1 text-muted"><span>Tenure:</span> <span>${year * 12} months</span></div>
-                                <div class="text-sm flex justify-between mb-1 text-muted"><span>Down Pmt:</span> <span>₹0</span></div>
-                                <div class="font-semibold flex justify-between mt-2 pt-2" style="border-top: 1px dashed var(--border);">
-                                    <span>Monthly EMI:</span> 
-                                    <span class="text-primary">${formatCurrency(Math.round(splitEmi))}</span>
+                                <div>
+                                    <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Monthly Split</div>
+                                    
+                                    <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2">Repayment Terms</div>
+                                    <div class="text-sm flex justify-between mb-1.5 text-muted">
+                                        <span>Split Tenure:</span>
+                                        <span class="font-medium text-text">${year * 12} months</span>
+                                    </div>
+                                    <div class="text-sm flex justify-between mb-3">
+                                        <span class="font-semibold text-muted">Monthly EMI:</span>
+                                        <span class="font-bold text-primary">${formatCurrency(Math.round(splitEmi))} / mo</span>
+                                    </div>
+
+                                    <div class="text-sm flex justify-between pt-2 mb-4" style="border-top: 1px solid var(--border);">
+                                        <span class="font-semibold text-muted">Total Amount Payable:</span>
+                                        <span class="font-bold text-text">${formatCurrency(Math.round(splitTotalPayable))}</span>
+                                    </div>
                                 </div>
-                                <div class="text-sm flex justify-between mt-2 pt-2 text-muted">
-                                    <span>Processing Fee ${tooltipHtml}</span>
-                                    <span>${formatCurrency(Math.round(processingFee))}</span>
-                                </div>
+
+                                <button type="button" class="btn btn-primary no-pdf pay-now-btn" 
+                                        style="width: 100%; padding: 0.75rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 86, 219, 0.25);"
+                                        onclick="event.stopPropagation(); alert('Proceeding to payment for 1st Month split amount: ${formatCurrency(Math.round(splitEmi))}')">
+                                    <span>Pay Now (1st Month)</span> 
+                                    <span style="font-size: 1rem; font-weight: 700;">${formatCurrency(Math.round(splitEmi))}</span>
+                                </button>
                             ` : `
-                                <div class="text-sm text-muted mt-4 text-center italic">Not applicable for > 3 years.</div>
+                                <div>
+                                    <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Monthly Split</div>
+                                    <div class="text-sm text-muted mt-4 text-center italic py-6">Not applicable for > 3 years.</div>
+                                </div>
                             `}
                         </div>
                     </div>
