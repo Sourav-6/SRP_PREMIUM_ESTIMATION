@@ -388,10 +388,9 @@ function calculateAllQuotes() {
                     });
                     hasValidPremium = true;
                 } catch (e) {
-                    td.className = 'premium-na text-error';
-                    td.textContent = 'Err';
+                    td.className = 'premium-na';
+                    td.textContent = 'N/A';
                     td.title = e.message;
-                    // console.error(`Calculation error for ${plan.name} year ${year}:`, e); // Suppress expected errors from console to avoid noise
                 }
             }
             tr.appendChild(td);
