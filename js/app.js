@@ -64,7 +64,11 @@ function initMemberDynamicFields() {
 
     if (!memberAgesInput || !container) return;
 
+    let isUpdatingFromRow = false;
+
     const parseAndRenderMembers = () => {
+        if (isUpdatingFromRow) return;
+
         const rawVal = memberAgesInput.value || '';
         const ages = rawVal
             .split(',')
@@ -115,7 +119,7 @@ function initMemberDynamicFields() {
             row.innerHTML = `
                 <div class="font-semibold text-primary" style="width: 85px; white-space: nowrap;">Member ${i}</div>
                 <div class="flex-1">
-                    <input type="number" name="memberAge_${i}" value="${age}" min="1" max="120" required class="form-control form-control-sm" style="padding: 0.5rem;" placeholder="Age">
+                    <input type="number" name="memberAge_${i}" value="${age}" min="1" max="120" required class="form-control form-control-sm member-age-item" style="padding: 0.5rem;" placeholder="Age">
                     <span class="error-msg" id="error-memberAge_${i}" style="display:none; font-size: 0.75rem; color: var(--error);"></span>
                 </div>
                 <div class="flex-1">
@@ -135,6 +139,35 @@ function initMemberDynamicFields() {
             container.appendChild(row);
         });
     };
+
+    const updateTopInputFromRows = () => {
+        const ageInputs = container.querySelectorAll('.member-age-item');
+        if (ageInputs.length === 0) return;
+
+        const agesList = [];
+        ageInputs.forEach(input => {
+            const val = input.value;
+            if (val !== '') {
+                agesList.push(val);
+            }
+        });
+
+        isUpdatingFromRow = true;
+        memberAgesInput.value = agesList.join(', ');
+        isUpdatingFromRow = false;
+    };
+
+    container.addEventListener('input', (e) => {
+        if (e.target && e.target.classList.contains('member-age-item')) {
+            updateTopInputFromRows();
+        }
+    });
+
+    container.addEventListener('change', (e) => {
+        if (e.target && e.target.classList.contains('member-age-item')) {
+            updateTopInputFromRows();
+        }
+    });
 
     memberAgesInput.addEventListener('input', parseAndRenderMembers);
     memberAgesInput.addEventListener('change', parseAndRenderMembers);
