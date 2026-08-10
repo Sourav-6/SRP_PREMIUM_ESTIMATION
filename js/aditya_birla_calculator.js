@@ -74,7 +74,11 @@ export function calculateAdityaBirlaPremium(inputs, config, rates) {
         throw new Error(`Sum Insured ₹${sumInsured} is not available for this family combination.`);
     }
 
-    const basePremium = siRates[ageBand];
+    let basePremium = siRates[ageBand];
+    if (!basePremium && ageBand === '5 - 17' && siRates['18 - 25']) {
+        basePremium = siRates['18 - 25'];
+    }
+
     if (!basePremium) {
         throw new Error(`Rate not available for age band ${ageBand}.`);
     }
