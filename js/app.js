@@ -154,19 +154,24 @@ function initMemberDynamicFields() {
 
         isUpdatingFromRow = true;
         memberAgesInput.value = agesList.join(', ');
+        if (hiddenMemberCount) hiddenMemberCount.value = agesList.length;
         isUpdatingFromRow = false;
     };
 
-    container.addEventListener('input', (e) => {
-        if (e.target && e.target.classList.contains('member-age-item')) {
-            updateTopInputFromRows();
-        }
-    });
+    const isMemberAgeEvent = (e) => {
+        return e.target && (
+            e.target.classList.contains('member-age-item') ||
+            (e.target.closest && e.target.closest('.member-age-item'))
+        );
+    };
 
-    container.addEventListener('change', (e) => {
-        if (e.target && e.target.classList.contains('member-age-item')) {
-            updateTopInputFromRows();
-        }
+    // Listen for all relevant events that can change a number input's value
+    ['input', 'change', 'keyup', 'click'].forEach(eventType => {
+        container.addEventListener(eventType, (e) => {
+            if (isMemberAgeEvent(e)) {
+                updateTopInputFromRows();
+            }
+        });
     });
 
     memberAgesInput.addEventListener('input', parseAndRenderMembers);
