@@ -100,24 +100,12 @@
 
             <!-- Dashboard -->
             <div class="dashboard-layout fade-in">
-                <!-- Sidebar Adjustments -->
+            <!-- Sidebar -->
                 <aside class="dashboard-sidebar">
 <h3 class="mb-3 font-semibold border-b pb-2">Plan Specific Settings</h3>
 <div class="filter-card mb-4">
 <h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Optima Secure</h4>
 
-            <div class="form-group mb-4">
-                <label for="optima_secure_policyHistory" style="font-size: 0.85rem;">Policy History</label>
-                <select id="optima_secure_policyHistory" name="optima_secure_policyHistory" class="form-control form-control-sm">
-                    <option value="first_time_buyer" selected>First-time buyer</option>
-                    <option value="1_yr_old_with_claim">1 yr old with claim</option>
-                    <option value="1_yr_old_without_claim">1 yr old without claim</option>
-                    <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
-                    <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
-                    <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
-                </select>
-            </div>
-            
             <div class="form-group mb-3">
                 <label class="toggle-label">
                     <span style="font-size: 0.85rem;">All Insured NRI's?</span>
@@ -137,6 +125,22 @@
                     </div>
                 </label>
             </div>
+
+            <div class="porting-history-wrapper" id="wrapper_optima_secure_policyHistory">
+                <div class="porting-history-inner">
+                    <div class="form-group mb-4 mt-2">
+                        <label for="optima_secure_policyHistory" style="font-size: 0.85rem;">Policy History</label>
+                        <select id="optima_secure_policyHistory" name="optima_secure_policyHistory" class="form-control form-control-sm">
+                            <option value="first_time_buyer" selected>First-time buyer</option>
+                            <option value="1_yr_old_with_claim">1 yr old with claim</option>
+                            <option value="1_yr_old_without_claim">1 yr old without claim</option>
+                            <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
+                            <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
+                            <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             
             <div class="form-group mb-3">
                 <label class="toggle-label">
@@ -148,15 +152,7 @@
                 </label>
             </div>
             
-            <div class="form-group mb-3">
-                <label class="toggle-label">
-                    <span style="font-size: 0.85rem;">Claim in last 2 years?</span>
-                    <div class="toggle-switch">
-                        <input type="checkbox" name="optima_secure_claim" id="optima_secure_claim">
-                        <span class="slider round"></span>
-                    </div>
-                </label>
-            </div>
+
             
             <div class="mt-4 pt-3 border-t">
                 <p class="text-xs font-semibold text-muted mb-2 uppercase">Riders</p>
@@ -195,18 +191,6 @@
 <div class="filter-card mb-4">
 <h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Optima Secure Plus</h4>
 
-            <div class="form-group mb-4">
-                <label for="optima_secure_plus_policyHistory" style="font-size: 0.85rem;">Policy History</label>
-                <select id="optima_secure_plus_policyHistory" name="optima_secure_plus_policyHistory" class="form-control form-control-sm">
-                    <option value="first_time_buyer" selected>First-time buyer</option>
-                    <option value="1_yr_old_with_claim">1 yr old with claim</option>
-                    <option value="1_yr_old_without_claim">1 yr old without claim</option>
-                    <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
-                    <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
-                    <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
-                </select>
-            </div>
-            
             <div class="form-group mb-3">
                 <label class="toggle-label">
                     <span style="font-size: 0.85rem;">All Insured NRI's?</span>
@@ -226,6 +210,22 @@
                     </div>
                 </label>
             </div>
+
+            <div class="porting-history-wrapper" id="wrapper_optima_secure_plus_policyHistory">
+                <div class="porting-history-inner">
+                    <div class="form-group mb-4 mt-2">
+                        <label for="optima_secure_plus_policyHistory" style="font-size: 0.85rem;">Policy History</label>
+                        <select id="optima_secure_plus_policyHistory" name="optima_secure_plus_policyHistory" class="form-control form-control-sm">
+                            <option value="first_time_buyer" selected>First-time buyer</option>
+                            <option value="1_yr_old_with_claim">1 yr old with claim</option>
+                            <option value="1_yr_old_without_claim">1 yr old without claim</option>
+                            <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
+                            <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
+                            <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             
             <div class="form-group mb-3">
                 <label class="toggle-label">
@@ -237,15 +237,7 @@
                 </label>
             </div>
             
-            <div class="form-group mb-3">
-                <label class="toggle-label">
-                    <span style="font-size: 0.85rem;">Claim in last 2 years?</span>
-                    <div class="toggle-switch">
-                        <input type="checkbox" name="optima_secure_plus_claim" id="optima_secure_plus_claim">
-                        <span class="slider round"></span>
-                    </div>
-                </label>
-            </div>
+
 
             <div class="mt-4 pt-3 border-t">
                 <p class="text-xs font-semibold text-muted mb-2 uppercase">Riders</p>
@@ -276,18 +268,6 @@
 <div class="filter-card mb-4">
 <h4 class="mb-3 font-semibold text-primary text-sm uppercase tracking-wider border-b pb-1">Optima Super Secure</h4>
 
-            <div class="form-group mb-4">
-                <label for="optima_super_secure_policyHistory" style="font-size: 0.85rem;">Policy History</label>
-                <select id="optima_super_secure_policyHistory" name="optima_super_secure_policyHistory" class="form-control form-control-sm">
-                    <option value="first_time_buyer" selected>First-time buyer</option>
-                    <option value="1_yr_old_with_claim">1 yr old with claim</option>
-                    <option value="1_yr_old_without_claim">1 yr old without claim</option>
-                    <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
-                    <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
-                    <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
-                </select>
-            </div>
-            
             <div class="form-group mb-3">
                 <label class="toggle-label">
                     <span style="font-size: 0.85rem;">All Insured NRI's?</span>
@@ -307,6 +287,22 @@
                     </div>
                 </label>
             </div>
+
+            <div class="porting-history-wrapper" id="wrapper_optima_super_secure_policyHistory">
+                <div class="porting-history-inner">
+                    <div class="form-group mb-4 mt-2">
+                        <label for="optima_super_secure_policyHistory" style="font-size: 0.85rem;">Policy History</label>
+                        <select id="optima_super_secure_policyHistory" name="optima_super_secure_policyHistory" class="form-control form-control-sm">
+                            <option value="first_time_buyer" selected>First-time buyer</option>
+                            <option value="1_yr_old_with_claim">1 yr old with claim</option>
+                            <option value="1_yr_old_without_claim">1 yr old without claim</option>
+                            <option value="2_yr_plus_without_claim">2+ yrs without claim</option>
+                            <option value="2_yr_plus_with_claim_one_yr">2+ yrs claim in 1 yr</option>
+                            <option value="2_yr_plus_with_claim_both_yrs">2+ yrs claim both yrs</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             
             <div class="form-group mb-3">
                 <label class="toggle-label">
@@ -318,15 +314,7 @@
                 </label>
             </div>
             
-            <div class="form-group mb-3">
-                <label class="toggle-label">
-                    <span style="font-size: 0.85rem;">Claim in last 2 years?</span>
-                    <div class="toggle-switch">
-                        <input type="checkbox" name="optima_super_secure_claim" id="optima_super_secure_claim">
-                        <span class="slider round"></span>
-                    </div>
-                </label>
-            </div>
+
             
             <div class="mt-4 pt-3 border-t">
                 <p class="text-xs font-semibold text-muted mb-2 uppercase">Riders</p>
@@ -372,7 +360,7 @@
 </div>
 </aside>
 
-                <!-- Main Comparison Table -->
+                <!-- Main table -->
                 <main class="dashboard-content">
                     <div class="dashboard-header flex justify-between items-center mb-4">
                         <h2 class="m-0">Premium Quotes Comparison</h2>
@@ -392,7 +380,7 @@
                                 </tr>
                             </thead>
                             <tbody id="comparison-table-body">
-                                <!-- Populated dynamically by JS -->
+                                <!-- JS injected -->
                             </tbody>
                         </table>
                     </div>
@@ -401,7 +389,7 @@
         </form>
 </div>
 
-<!-- Calculation Help Modal -->
+<!-- Help modal -->
 <div id="help-modal" class="modal-overlay hidden">
     <div class="modal-content glass-card">
         <div class="modal-header">
@@ -445,7 +433,7 @@
     </div>
 </div>
 
-<!-- Help / Premium Calculation Guide Modal -->
+<!-- Help modal -->
 <div id="help-modal" class="modal-overlay hidden">
     <div class="modal-content">
         <div class="modal-header">

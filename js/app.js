@@ -94,7 +94,7 @@ function initMemberDynamicFields() {
             row.style.background = 'var(--glass-bg)';
             row.style.borderColor = 'var(--border)';
 
-            // Smart relation detection
+            // Relation detection
             let relation = 'Self';
             if (idx === 1) {
                 if (validAges[1] >= 18 && Math.abs(validAges[0] - validAges[1]) <= 25) {
@@ -165,7 +165,7 @@ function initMemberDynamicFields() {
         );
     };
 
-    // Listen for all relevant events that can change a number input's value
+    // Listen inputs
     ['input', 'change', 'keyup', 'click'].forEach(eventType => {
         container.addEventListener(eventType, (e) => {
             if (isMemberAgeEvent(e)) {
@@ -183,7 +183,7 @@ function initMemberDynamicFields() {
 function initSyncPolicySettings() {
     const form = document.getElementById('calculator-form');
     
-    // Common settings suffixes to synchronize across policy sections
+    // Settings suffixes
     const linkedSuffixes = [
         'policyHistory',
         'nri',
@@ -249,17 +249,38 @@ function updateLimitlessRiderState() {
     });
 }
 
+function updatePortingVisibility() {
+    const form = document.getElementById('calculator-form');
+    if (!form) return;
+    
+    ['optima_secure', 'optima_secure_plus', 'optima_super_secure'].forEach(prefix => {
+        const portingToggle = form.querySelector(`[name="${prefix}_porting"]`);
+        const historyWrapper = document.getElementById(`wrapper_${prefix}_policyHistory`);
+        const historySelect = document.getElementById(`${prefix}_policyHistory`);
+        
+        if (portingToggle && historyWrapper && historySelect) {
+            if (portingToggle.checked) {
+                historyWrapper.classList.add('expanded');
+            } else {
+                historyWrapper.classList.remove('expanded');
+                historySelect.value = 'first_time_buyer';
+            }
+        }
+    });
+}
+
 function initAutoCalculate() {
     const form = document.getElementById('calculator-form');
     
     const handleUpdate = () => {
         updateLimitlessRiderState();
+        updatePortingVisibility();
         if (validateSetup(false)) {
             calculateAllQuotes();
         }
     };
 
-    // Listen to all changes inside the form
+    // Form changes
     form.addEventListener('input', handleUpdate);
     form.addEventListener('change', handleUpdate);
 
@@ -295,7 +316,7 @@ function clearErrors() {
     });
 }
 
-// Removed initLiveCalculations as it is superseded by initAutoCalculate
+// Removed initLiveCalculations
 
 function getBaseInputs() {
     const form = document.getElementById('calculator-form');
@@ -354,7 +375,7 @@ function calculateAllQuotes() {
                 td.textContent = 'N/A';
             } else {
                 try {
-                    // Extract plan-specific modifiers dynamically
+                    // Extract modifiers
                     const formData = new FormData(document.getElementById('calculator-form'));
                     const planInputs = { 
                         ...inputs, 
@@ -377,7 +398,7 @@ function calculateAllQuotes() {
                     premiumDiv.textContent = formatCurrency(result.finalPremium);
                     td.appendChild(premiumDiv);
 
-                    // EMI Logic (Not applicable for Aditya Birla plans)
+                    // EMI Logic
                     const isAdityaBirla = plan.id.startsWith('ab_');
                     if (!isAdityaBirla) {
                         if (inputs.paymentMode === 'loan_emi') {
@@ -449,7 +470,7 @@ function calculateAllQuotes() {
 }
 
 function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
-    // Remove active styles from other cells in this row
+    // Remove styles
     Array.from(parentTr.children).forEach(c => c.style.backgroundColor = '');
     
     let existingBreakdown = parentTr.nextElementSibling;
@@ -465,7 +486,7 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
         if (isSameCell) return; // Just toggle off
     }
     
-    // Highlight the clicked cell
+    // Highlight cell
     clickedTd.style.backgroundColor = 'var(--primary-light)';
     
     const bdRow = document.createElement('tr');
@@ -474,7 +495,7 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
     
     const bdCell = document.createElement('td');
     bdCell.colSpan = 6;
-    // Set cell padding to 0 so the inner div can control the spacing and hide properly
+    // Set padding
     bdCell.style.padding = '0';
     bdCell.innerHTML = `
         <div class="breakdown-wrapper">
@@ -482,7 +503,7 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
                 <div class="breakdown-content">
                     <div class="flex justify-between items-center mb-3">
                 <h4 class="font-semibold text-primary m-0">${planName} - ${year} Year(s) Breakdown</h4>
-                <button type="button" class="btn btn-primary btn-sm no-pdf download-pdf-btn">⬇ Download PDF</button>
+                <button type="button" class="btn btn-primary btn-sm no-pdf download-pdf-btn">Download PDF</button>
             </div>
             <table class="breakdown-table mb-4">
                 <tbody>
@@ -525,7 +546,7 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
                 let loanTenureMonths = year === 1 ? 11 : (year === 2 ? 21 : (year === 3 ? 30 : 36));
                 const downPayment = result.finalPremium * downPaymentPct;
                 
-                // Calculate Loan EMI
+                // Calculate Loan
                 const calcFee = result.finalPremium * 0.0118;
                 const processingFee = Math.max(354, calcFee);
                 const feeMessage = calcFee < 354 ? 'Minimum ₹354 applied' : 'Calculated at 1.18% of premium';
@@ -534,7 +555,7 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
                 const payNow = downPayment + processingFee;
                 const loanTotalPayable = payNow + (loanEmi * loanTenureMonths);
                 
-                // Monthly Split EMI (No processing fee, no down payment)
+                // Split EMI
                 const splitEmi = result.finalPremium / (year * 12);
                 const splitTotalPayable = result.finalPremium;
                 
@@ -637,17 +658,17 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
         `;
     bdRow.appendChild(bdCell);
     
-    // Attach PDF download listener
+    // PDF listener
     const downloadBtn = bdCell.querySelector('.download-pdf-btn');
     const contentToDownload = bdCell.querySelector('.breakdown-content');
     downloadBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // prevent clicking cell again
+        e.stopPropagation(); // Prevent re-click
         downloadPDF(contentToDownload, `${planName.replace(/\s+/g, '-')}-${year}Yr-Quote.pdf`);
     });
 
     parentTr.parentNode.insertBefore(bdRow, parentTr.nextSibling);
     
-    // Trigger smooth expand
+    // Smooth expand
     requestAnimationFrame(() => {
         const wrapper = bdCell.querySelector('.breakdown-wrapper');
         if (wrapper) wrapper.classList.add('expanded');

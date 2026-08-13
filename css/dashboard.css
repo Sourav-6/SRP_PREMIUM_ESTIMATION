@@ -265,3 +265,22 @@
         max-height: none;
     }
 }
+
+/* Porting History Dropdown Animation */
+.porting-history-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s ease-out, opacity 0.3s ease-out, margin 0.3s ease-out;
+    opacity: 0;
+    margin-bottom: 0 !important;
+}
+
+.porting-history-wrapper.expanded {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-bottom: 1.5rem !important; /* matches mb-4 */
+}
+
+.porting-history-inner {
+    overflow: hidden;
+}
