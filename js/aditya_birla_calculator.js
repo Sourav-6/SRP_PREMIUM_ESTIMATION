@@ -35,8 +35,16 @@ export function calculateAdityaBirlaPremium(inputs, config, rates) {
     const siKey = sumInsured.toString();
     const productKey = planType === 'ab_activ_one_max' ? 'activ_one_max' : 'activ_yuva';
 
-    if (productKey === 'activ_yuva' && (eldestAge > 35 || (adults > 0 && eldestAge < 18))) {
-        throw new Error("Aditya Birla Activ Yuva is only available for adults between 18 and 35 years of age.");
+    if (productKey === 'activ_yuva') {
+        let hasYouthAdult = false;
+        members.forEach(m => {
+            if (m.relation !== 'Child' && m.age >= 18 && m.age <= 35) {
+                hasYouthAdult = true;
+            }
+        });
+        if (adults > 0 && !hasYouthAdult) {
+            throw new Error("Aditya Birla Activ Yuva requires at least one adult between 18 and 35 years of age.");
+        }
     }
 
     categoryKey = `${adults}A`;

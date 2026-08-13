@@ -188,11 +188,26 @@
     background-color: #0f172a;
 }
 
+.breakdown-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s ease-out, opacity 0.3s ease-out;
+    opacity: 0;
+}
+
+.breakdown-wrapper.expanded {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+.breakdown-inner {
+    overflow: hidden;
+}
+
 .breakdown-content {
     padding: 1.5rem;
     text-align: left;
     border-top: 1px dashed var(--border);
-    animation: slideDown 0.3s ease-out;
 }
 
 .breakdown-table {

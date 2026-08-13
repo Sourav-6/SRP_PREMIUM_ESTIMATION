@@ -45,12 +45,12 @@
                     <div class="form-group">
                         <label for="sumInsured">Sum Insured <span class="text-error">*</span></label>
                         <select id="sumInsured" name="sumInsured" class="form-control" required>
-                            <option value="" disabled selected>Select Sum Insured</option>
+                            <option value="" disabled>Select Sum Insured</option>
                             <option value="500000">5 Lakhs</option>
                             <option value="700000">7 Lakhs</option>
                             <option value="1000000">10 Lakhs</option>
                             <option value="1500000">15 Lakhs</option>
-                            <option value="2000000">20 Lakhs</option>
+                            <option value="2000000" selected>20 Lakhs</option>
                             <option value="2500000">25 Lakhs</option>
                             <option value="5000000">50 Lakhs</option>
                             <option value="7500000">75 Lakhs</option>
@@ -165,7 +165,7 @@
                     <label class="toggle-label">
                         <span style="font-size: 0.85rem;">Unlimited Restore</span>
                         <div class="toggle-switch">
-                            <input type="checkbox" name="optima_secure_unlimitedRestore" id="optima_secure_unlimitedRestore">
+                            <input type="checkbox" name="optima_secure_unlimitedRestore" id="optima_secure_unlimitedRestore" checked>
                             <span class="slider round"></span>
                         </div>
                     </label>
@@ -250,15 +250,7 @@
             <div class="mt-4 pt-3 border-t">
                 <p class="text-xs font-semibold text-muted mb-2 uppercase">Riders</p>
                 
-                <div class="form-group mb-3">
-                    <label class="toggle-label">
-                        <span style="font-size: 0.85rem;">Unlimited Restore</span>
-                        <div class="toggle-switch">
-                            <input type="checkbox" name="optima_secure_plus_unlimitedRestore" id="optima_secure_plus_unlimitedRestore">
-                            <span class="slider round"></span>
-                        </div>
-                    </label>
-                </div>
+
                 
                 <div class="form-group mb-3">
                     <label class="toggle-label">
@@ -343,7 +335,7 @@
                     <label class="toggle-label">
                         <span style="font-size: 0.85rem;">Unlimited Restore</span>
                         <div class="toggle-switch">
-                            <input type="checkbox" name="optima_super_secure_unlimitedRestore" id="optima_super_secure_unlimitedRestore">
+                            <input type="checkbox" name="optima_super_secure_unlimitedRestore" id="optima_super_secure_unlimitedRestore" checked>
                             <span class="slider round"></span>
                         </div>
                     </label>

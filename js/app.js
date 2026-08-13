@@ -402,7 +402,7 @@ function calculateAllQuotes() {
                             emiDiv.className = 'text-muted mt-1';
                             emiDiv.style.fontSize = '0.75rem';
                             emiDiv.style.fontWeight = 'normal';
-                            emiDiv.textContent = `EMI: ${formatCurrency(Math.round(emi))}/mo`;
+                            emiDiv.textContent = `${formatCurrency(Math.round(downPayment))} + ${formatCurrency(Math.round(emi))}*${loanTenureMonths} m`;
                             td.appendChild(emiDiv);
                             
                         } else if (inputs.paymentMode === 'monthly_split') {
@@ -413,11 +413,9 @@ function calculateAllQuotes() {
                             if (year <= 3) {
                                 const splitMonths = year * 12;
                                 const emi = result.finalPremium / splitMonths;
-                                emiDiv.textContent = `Split: ${formatCurrency(Math.round(emi))}/mo`;
-                            } else {
-                                emiDiv.textContent = `Split: N/A`;
+                                emiDiv.textContent = `${formatCurrency(Math.round(emi))} * ${splitMonths} m`;
+                                td.appendChild(emiDiv);
                             }
-                            td.appendChild(emiDiv);
                         }
                     }
                     td.title = 'Click to view breakdown';
@@ -457,7 +455,13 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
     let existingBreakdown = parentTr.nextElementSibling;
     if (existingBreakdown && existingBreakdown.classList.contains('breakdown-row')) {
         const isSameCell = existingBreakdown.dataset.cellIndex === clickedTd.cellIndex.toString();
-        existingBreakdown.remove();
+        const oldWrapper = existingBreakdown.querySelector('.breakdown-wrapper');
+        if (oldWrapper) {
+            oldWrapper.classList.remove('expanded');
+            setTimeout(() => existingBreakdown.remove(), 400);
+        } else {
+            existingBreakdown.remove();
+        }
         if (isSameCell) return; // Just toggle off
     }
     
@@ -470,9 +474,13 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
     
     const bdCell = document.createElement('td');
     bdCell.colSpan = 6;
+    // Set cell padding to 0 so the inner div can control the spacing and hide properly
+    bdCell.style.padding = '0';
     bdCell.innerHTML = `
-        <div class="breakdown-content">
-            <div class="flex justify-between items-center mb-3">
+        <div class="breakdown-wrapper">
+            <div class="breakdown-inner">
+                <div class="breakdown-content">
+                    <div class="flex justify-between items-center mb-3">
                 <h4 class="font-semibold text-primary m-0">${planName} - ${year} Year(s) Breakdown</h4>
                 <button type="button" class="btn btn-primary btn-sm no-pdf download-pdf-btn">⬇ Download PDF</button>
             </div>
@@ -623,8 +631,10 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
                 </div>
                 `;
             })()}
+                </div>
+            </div>
         </div>
-    `;
+        `;
     bdRow.appendChild(bdCell);
     
     // Attach PDF download listener
@@ -636,6 +646,12 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
     });
 
     parentTr.parentNode.insertBefore(bdRow, parentTr.nextSibling);
+    
+    // Trigger smooth expand
+    requestAnimationFrame(() => {
+        const wrapper = bdCell.querySelector('.breakdown-wrapper');
+        if (wrapper) wrapper.classList.add('expanded');
+    });
 }
 
 function initThemeToggle() {
