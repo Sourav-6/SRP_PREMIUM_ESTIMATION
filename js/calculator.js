@@ -4,7 +4,7 @@
  */
 
 export function calculatePremium(inputs, config, rates) {
-    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim, limitlessRider } = inputs;
+    const { sumInsured, tenure, members, nri, deductible, policyHistory, porting, existingCustomer, claim, limitlessRider, wellbeingRider } = inputs;
     const rules = rates.discountRules;
     const breakdown = { adjustments: [], memberBreakdown: [] };
     
@@ -194,6 +194,31 @@ export function calculatePremium(inputs, config, rates) {
             type: 'loading_amount' 
         });
         runningPremium += claimLoadingAmount;
+    }
+
+    // Wellbeing Rider
+    if (wellbeingRider) {
+        let isFloater = members.length > 1;
+        let baseWellbeingPremiumPerYear = isFloater ? 1999 : 999;
+        let totalBaseWellbeing = baseWellbeingPremiumPerYear * tenure;
+        
+        let wellbeingLoyaltyDiscountAmount = Math.round(totalBaseWellbeing * existingDiscountPct);
+        
+        breakdown.adjustments.push({ 
+            name: `Optima Wellbeing Rider (${tenure} Yrs)`, 
+            amount: totalBaseWellbeing, 
+            type: 'loading_amount' 
+        });
+        runningPremium += totalBaseWellbeing;
+        
+        if (wellbeingLoyaltyDiscountAmount > 0) {
+            breakdown.adjustments.push({ 
+                name: `Wellbeing Loyalty Discount (-${+(existingDiscountPct * 100).toFixed(2)}%)`, 
+                amount: -wellbeingLoyaltyDiscountAmount, 
+                type: 'discount_amount' 
+            });
+            runningPremium -= wellbeingLoyaltyDiscountAmount;
+        }
     }
 
     // 7. Favourable Claims Discount (for members under 60 in that policy year)

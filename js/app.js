@@ -259,10 +259,22 @@ function updatePortingVisibility() {
         const historySelect = document.getElementById(`${prefix}_policyHistory`);
         
         if (portingToggle && historyWrapper && historySelect) {
+            const firstTimeOption = historySelect.querySelector('option[value="first_time_buyer"]');
             if (portingToggle.checked) {
                 historyWrapper.classList.add('expanded');
+                if (firstTimeOption) {
+                    firstTimeOption.disabled = true;
+                    firstTimeOption.hidden = true;
+                }
+                if (historySelect.value === 'first_time_buyer') {
+                    historySelect.value = '1_yr_old_without_claim';
+                }
             } else {
                 historyWrapper.classList.remove('expanded');
+                if (firstTimeOption) {
+                    firstTimeOption.disabled = false;
+                    firstTimeOption.hidden = false;
+                }
                 historySelect.value = 'first_time_buyer';
             }
         }
@@ -417,13 +429,16 @@ function calculateAllQuotes() {
                             
                             const loanAmount = result.finalPremium;
                             const downPayment = loanAmount * downPaymentPct;
+                            const calcFee = loanAmount * 0.0118;
+                            const processingFee = Math.max(354, calcFee);
+                            const payNow = downPayment + processingFee;
                             const emi = (loanAmount - downPayment) * ((1 / loanTenureMonths) + 0.0084);
                             
                             const emiDiv = document.createElement('div');
                             emiDiv.className = 'text-muted mt-1';
                             emiDiv.style.fontSize = '0.75rem';
                             emiDiv.style.fontWeight = 'normal';
-                            emiDiv.textContent = `${formatCurrency(Math.round(downPayment))} + ${formatCurrency(Math.round(emi))}*${loanTenureMonths} m`;
+                            emiDiv.textContent = `${formatCurrency(Math.round(payNow))} + ${formatCurrency(Math.round(emi))}*${loanTenureMonths}`;
                             td.appendChild(emiDiv);
                             
                         } else if (inputs.paymentMode === 'monthly_split') {
@@ -434,7 +449,7 @@ function calculateAllQuotes() {
                             if (year <= 3) {
                                 const splitMonths = year * 12;
                                 const emi = result.finalPremium / splitMonths;
-                                emiDiv.textContent = `${formatCurrency(Math.round(emi))} * ${splitMonths} m`;
+                                emiDiv.textContent = `${formatCurrency(Math.round(emi))} * ${splitMonths}`;
                                 td.appendChild(emiDiv);
                             }
                         }
