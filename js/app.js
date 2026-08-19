@@ -403,11 +403,18 @@ function calculateAllQuotes() {
                         wellbeingRider: formData.get(`${plan.prefix}_wellbeingRider`) === 'on'
                     };
                     const result = plan.calculator(planInputs, appConfig, allRates);
+                    
+                    let displayPremium = result.finalPremium;
+                    if (inputs.paymentMode === 'monthly_split') {
+                        const ltdAdj = result.breakdown.adjustments.find(a => a.name.startsWith('Long Term Discount'));
+                        if (ltdAdj) displayPremium += Math.abs(ltdAdj.amount);
+                    }
+
                     td.className = 'premium-value flex-col items-center';
                     
                     // Premium
                     const premiumDiv = document.createElement('div');
-                    premiumDiv.textContent = formatCurrency(result.finalPremium);
+                    premiumDiv.textContent = formatCurrency(displayPremium);
                     td.appendChild(premiumDiv);
 
                     // EMI Logic
@@ -427,7 +434,7 @@ function calculateAllQuotes() {
                                 loanTenureMonths = 36;
                             }
                             
-                            const loanAmount = result.finalPremium;
+                            const loanAmount = result.finalPremium; // Loan EMI always uses standard premium
                             const downPayment = loanAmount * downPaymentPct;
                             const calcFee = loanAmount * 0.0118;
                             const processingFee = Math.max(354, calcFee);
@@ -448,7 +455,7 @@ function calculateAllQuotes() {
                             emiDiv.style.fontWeight = 'normal';
                             if (year <= 3) {
                                 const splitMonths = year * 12;
-                                const emi = result.finalPremium / splitMonths;
+                                const emi = displayPremium / splitMonths;
                                 emiDiv.textContent = `${formatCurrency(Math.round(emi))} * ${splitMonths}`;
                                 td.appendChild(emiDiv);
                             }
@@ -456,7 +463,7 @@ function calculateAllQuotes() {
                     }
                     td.title = 'Click to view breakdown';
                     td.addEventListener('click', () => {
-                        toggleBreakdown(tr, td, plan.name, year, result);
+                        toggleBreakdown(tr, td, plan.name, year, result, inputs.paymentMode);
                     });
                     hasValidPremium = true;
                 } catch (e) {
@@ -484,7 +491,7 @@ function calculateAllQuotes() {
     }
 }
 
-function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
+function toggleBreakdown(parentTr, clickedTd, planName, year, result, paymentMode = 'loan_emi') {
     // Remove styles
     Array.from(parentTr.children).forEach(c => c.style.backgroundColor = '');
     
@@ -510,174 +517,185 @@ function toggleBreakdown(parentTr, clickedTd, planName, year, result) {
     
     const bdCell = document.createElement('td');
     bdCell.colSpan = 6;
-    // Set padding
     bdCell.style.padding = '0';
+
+    const ltdIndex = result.breakdown.adjustments.findIndex(a => a.name.startsWith('Long Term Discount'));
+    const ltdAdj = ltdIndex !== -1 ? result.breakdown.adjustments[ltdIndex] : null;
+    const ltdAmount = ltdAdj ? Math.abs(ltdAdj.amount) : 0;
+    
+    const premiumWithLTD = result.finalPremium;
+    const premiumWithoutLTD = result.finalPremium + ltdAmount;
+    const displayFinalPremium = paymentMode === 'monthly_split' ? premiumWithoutLTD : premiumWithLTD;
+    
+    const memberRowsHtml = result.breakdown.memberBreakdown.map(m => `
+        <tr>
+            <td>${m.name} ${m.note ? `<span style="font-size: 0.85em; color: var(--text-muted); margin-left: 5px;">${m.note}</span>` : ''}</td>
+            <td>${formatCurrency(m.amount)}</td>
+        </tr>
+    `).join('');
+
+    const basePremRowHtml = result.breakdown.totalBasePremium ? `
+        <tr style="border-top: 2px solid var(--border); font-weight: 500;">
+            <td>Total Base Premium</td>
+            <td>${formatCurrency(result.breakdown.totalBasePremium)}</td>
+        </tr>
+    ` : '';
+
+    const adjustmentsHtml = result.breakdown.adjustments.map((a, index) => {
+        if (paymentMode === 'monthly_split' && index === ltdIndex) return '';
+        return `
+        <tr>
+            <td>${a.name}</td>
+            <td class="${a.amount > 0 ? 'amount-positive' : 'amount-negative'}">${a.amount > 0 ? '+' : ''}${formatCurrency(a.amount)}</td>
+        </tr>
+        `;
+    }).join('');
+
+    let emiSectionHtml = '';
+    if (planName.includes('Aditya Birla')) {
+        emiSectionHtml = `
+        <div style="background: var(--bg-card); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border);">
+            <h5 class="font-semibold mb-2 text-xs uppercase tracking-wider text-primary">EMI Options Comparison</h5>
+            <div class="text-sm text-muted italic">EMI payment options are not available for Aditya Birla plans. Only Annual payment is supported.</div>
+        </div>
+        `;
+    } else {
+        const downPaymentPct = year === 1 ? 0.15 : (year <= 4 ? 0.10 : 0.05);
+        const loanTenureMonths = year === 1 ? 11 : (year === 2 ? 21 : (year === 3 ? 30 : 36));
+        const downPayment = premiumWithLTD * downPaymentPct;
+        
+        const calcFee = premiumWithLTD * 0.0118;
+        const processingFee = Math.max(354, calcFee);
+        const feeMessage = calcFee < 354 ? 'Minimum ₹354 applied' : 'Calculated at 1.18% of premium';
+        
+        const loanEmi = (premiumWithLTD - downPayment) * ((1 / loanTenureMonths) + 0.0084);
+        const payNow = downPayment + processingFee;
+        const loanTotalPayable = payNow + (loanEmi * loanTenureMonths);
+        
+        const splitEmi = premiumWithoutLTD / (year * 12);
+        const splitTotalPayable = premiumWithoutLTD;
+
+        const tooltipHtml = `
+            <span onclick="const t = this.querySelector('.custom-tooltip'); const isVis = t.style.visibility === 'visible'; document.querySelectorAll('.custom-tooltip').forEach(el => {el.style.visibility='hidden'; el.style.opacity='0';}); if(!isVis) { t.style.visibility='visible'; t.style.opacity='1'; } event.stopPropagation();" 
+                  style="position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--border); color: var(--text-muted); font-size: 11px; font-weight: bold; cursor: pointer; margin-left: 4px;">
+                ?
+                <span class="custom-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s; background-color: var(--bg-card); border: 1px solid var(--border); color: var(--text); text-align: center; border-radius: 6px; padding: 4px 8px; position: absolute; z-index: 100; left: 140%; top: 50%; transform: translateY(-50%); font-size: 11px; white-space: nowrap; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    ${feeMessage}
+                    <svg style="position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: -1px;" width="5" height="10" viewBox="0 0 5 10"><polygon points="0,5 5,0 5,10" fill="var(--bg-card)"/></svg>
+                </span>
+            </span>
+        `;
+
+        const monthlySplitContent = year <= 3 ? `
+            <div>
+                <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Monthly Split</div>
+                <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2">Repayment Terms</div>
+                <div class="text-sm flex justify-between mb-1.5 text-muted">
+                    <span>Split Tenure:</span>
+                    <span class="font-medium text-text">${year * 12} months</span>
+                </div>
+                <div class="text-sm flex justify-between mb-3">
+                    <span class="font-semibold text-muted">Monthly EMI:</span>
+                    <span class="font-bold text-primary">${formatCurrency(Math.round(splitEmi))} / mo</span>
+                </div>
+                <div class="text-sm flex justify-between pt-2 mb-4" style="border-top: 1px solid var(--border);">
+                    <span class="font-semibold text-muted">Total Amount Payable:</span>
+                    <span class="font-bold text-text">${formatCurrency(Math.round(splitTotalPayable))}</span>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary no-pdf pay-now-btn" 
+                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 86, 219, 0.25);"
+                    onclick="event.stopPropagation(); alert('Proceeding to payment for 1st Month split amount: ${formatCurrency(Math.round(splitEmi))}')">
+                <span>Pay Now (1st Month)</span> 
+                <span style="font-size: 1rem; font-weight: 700;">${formatCurrency(Math.round(splitEmi))}</span>
+            </button>
+        ` : `
+            <div>
+                <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Monthly Split</div>
+                <div class="text-sm text-muted mt-4 text-center italic py-6">Not applicable for > 3 years.</div>
+            </div>
+        `;
+
+        emiSectionHtml = `
+        <div style="background: var(--bg-card); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border);">
+            <h5 class="font-semibold mb-3 text-xs uppercase tracking-wider text-primary">EMI Options Comparison</h5>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+                <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Loan EMI</div>
+                        <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2">Upfront Charges</div>
+                        <div class="text-sm flex justify-between mb-1.5 text-muted">
+                            <span>Down Payment (${downPaymentPct*100}%):</span>
+                            <span class="font-medium text-text">${formatCurrency(Math.round(downPayment))}</span>
+                        </div>
+                        <div class="text-sm flex justify-between mb-3 text-muted">
+                            <span>Processing Fee: ${tooltipHtml}</span>
+                            <span class="font-medium text-text">${formatCurrency(Math.round(processingFee))}</span>
+                        </div>
+                        <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2 pt-2" style="border-top: 1px dashed var(--border);">Repayment Terms</div>
+                        <div class="text-sm flex justify-between mb-1.5 text-muted">
+                            <span>Loan Tenure:</span>
+                            <span class="font-medium text-text">${loanTenureMonths} months</span>
+                        </div>
+                        <div class="text-sm flex justify-between mb-3">
+                            <span class="font-semibold text-muted">Monthly EMI:</span>
+                            <span class="font-bold text-primary">${formatCurrency(Math.round(loanEmi))} / mo</span>
+                        </div>
+                        <div class="text-sm flex justify-between pt-2 mb-4" style="border-top: 1px solid var(--border);">
+                            <span class="font-semibold text-muted">Total Amount Payable:</span>
+                            <span class="font-bold text-text">${formatCurrency(Math.round(loanTotalPayable))}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary no-pdf pay-now-btn" 
+                            style="width: 100%; padding: 0.75rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 86, 219, 0.25);"
+                            onclick="event.stopPropagation(); alert('Proceeding to payment for Pay Now amount: ${formatCurrency(Math.round(payNow))}')">
+                        <span>Pay Now (Upfront)</span> 
+                        <span style="font-size: 1rem; font-weight: 700;">${formatCurrency(Math.round(payNow))}</span>
+                    </button>
+                </div>
+                
+                <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
+                    ${monthlySplitContent}
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
     bdCell.innerHTML = `
         <div class="breakdown-wrapper">
             <div class="breakdown-inner">
                 <div class="breakdown-content">
                     <div class="flex justify-between items-center mb-3">
-                <h4 class="font-semibold text-primary m-0">${planName} - ${year} Year(s) Breakdown</h4>
-                <button type="button" class="btn btn-primary btn-sm no-pdf download-pdf-btn">Download PDF</button>
-            </div>
-            <table class="breakdown-table mb-4">
-                <tbody>
-                    ${result.breakdown.memberBreakdown.map(m => `
-                        <tr>
-                            <td>${m.name} ${m.note ? `<span style="font-size: 0.85em; color: var(--text-muted); margin-left: 5px;">${m.note}</span>` : ''}</td>
-                            <td>${formatCurrency(m.amount)}</td>
-                        </tr>
-                    `).join('')}
-                    ${result.breakdown.totalBasePremium ? `
-                        <tr style="border-top: 2px solid var(--border); font-weight: 500;">
-                            <td>Total Base Premium</td>
-                            <td>${formatCurrency(result.breakdown.totalBasePremium)}</td>
-                        </tr>
-                    ` : ''}
-                    ${result.breakdown.adjustments.map(a => `
-                        <tr>
-                            <td>${a.name}</td>
-                            <td class="${a.amount > 0 ? 'amount-positive' : 'amount-negative'}">${a.amount > 0 ? '+' : ''}${formatCurrency(a.amount)}</td>
-                        </tr>
-                    `).join('')}
-                    <tr style="border-top: 2px solid var(--border); font-size: 1.1rem; color: var(--primary-dark);">
-                        <td><strong>Final Premium (incl. GST)</strong></td>
-                        <td><strong>${formatCurrency(result.finalPremium)}</strong></td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            ${(() => {
-                if (planName.includes('Aditya Birla')) {
-                    return `
-                    <div style="background: var(--bg-card); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border);">
-                        <h5 class="font-semibold mb-2 text-xs uppercase tracking-wider text-primary">EMI Options Comparison</h5>
-                        <div class="text-sm text-muted italic">EMI payment options are not available for Aditya Birla plans. Only Annual payment is supported.</div>
+                        <h4 class="font-semibold text-primary m-0">${planName} - ${year} Year(s) Breakdown</h4>
+                        <button type="button" class="btn btn-primary btn-sm no-pdf download-pdf-btn">Download PDF</button>
                     </div>
-                    `;
-                }
-
-                let downPaymentPct = year === 1 ? 0.15 : (year <= 4 ? 0.10 : 0.05);
-                let loanTenureMonths = year === 1 ? 11 : (year === 2 ? 21 : (year === 3 ? 30 : 36));
-                const downPayment = result.finalPremium * downPaymentPct;
-                
-                // Calculate Loan
-                const calcFee = result.finalPremium * 0.0118;
-                const processingFee = Math.max(354, calcFee);
-                const feeMessage = calcFee < 354 ? 'Minimum ₹354 applied' : 'Calculated at 1.18% of premium';
-                
-                const loanEmi = (result.finalPremium - downPayment) * ((1 / loanTenureMonths) + 0.0084);
-                const payNow = downPayment + processingFee;
-                const loanTotalPayable = payNow + (loanEmi * loanTenureMonths);
-                
-                // Split EMI
-                const splitEmi = result.finalPremium / (year * 12);
-                const splitTotalPayable = result.finalPremium;
-                
-                const tooltipHtml = `
-                    <span onclick="const t = this.querySelector('.custom-tooltip'); const isVis = t.style.visibility === 'visible'; document.querySelectorAll('.custom-tooltip').forEach(el => {el.style.visibility='hidden'; el.style.opacity='0';}); if(!isVis) { t.style.visibility='visible'; t.style.opacity='1'; } event.stopPropagation();" 
-                          style="position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--border); color: var(--text-muted); font-size: 11px; font-weight: bold; cursor: pointer; margin-left: 4px;">
-                        ?
-                        <span class="custom-tooltip" style="visibility: hidden; opacity: 0; transition: opacity 0.2s; background-color: var(--bg-card); border: 1px solid var(--border); color: var(--text); text-align: center; border-radius: 6px; padding: 4px 8px; position: absolute; z-index: 100; left: 140%; top: 50%; transform: translateY(-50%); font-size: 11px; white-space: nowrap; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                            ${feeMessage}
-                            <svg style="position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: -1px;" width="5" height="10" viewBox="0 0 5 10"><polygon points="0,5 5,0 5,10" fill="var(--bg-card)"/></svg>
-                        </span>
-                    </span>
-                `;
-                
-                return `
-                <div style="background: var(--bg-card); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border);">
-                    <h5 class="font-semibold mb-3 text-xs uppercase tracking-wider text-primary">EMI Options Comparison</h5>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
-                        <!-- Loan EMI Card -->
-                        <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
-                            <div>
-                                <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Loan EMI</div>
-                                
-                                <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2">Upfront Charges</div>
-                                <div class="text-sm flex justify-between mb-1.5 text-muted">
-                                    <span>Down Payment (${downPaymentPct*100}%):</span>
-                                    <span class="font-medium text-text">${formatCurrency(Math.round(downPayment))}</span>
-                                </div>
-                                <div class="text-sm flex justify-between mb-3 text-muted">
-                                    <span>Processing Fee: ${tooltipHtml}</span>
-                                    <span class="font-medium text-text">${formatCurrency(Math.round(processingFee))}</span>
-                                </div>
-
-                                <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2 pt-2" style="border-top: 1px dashed var(--border);">Repayment Terms</div>
-                                <div class="text-sm flex justify-between mb-1.5 text-muted">
-                                    <span>Loan Tenure:</span>
-                                    <span class="font-medium text-text">${loanTenureMonths} months</span>
-                                </div>
-                                <div class="text-sm flex justify-between mb-3">
-                                    <span class="font-semibold text-muted">Monthly EMI:</span>
-                                    <span class="font-bold text-primary">${formatCurrency(Math.round(loanEmi))} / mo</span>
-                                </div>
-
-                                <div class="text-sm flex justify-between pt-2 mb-4" style="border-top: 1px solid var(--border);">
-                                    <span class="font-semibold text-muted">Total Amount Payable:</span>
-                                    <span class="font-bold text-text">${formatCurrency(Math.round(loanTotalPayable))}</span>
-                                </div>
-                            </div>
-
-                            <button type="button" class="btn btn-primary no-pdf pay-now-btn" 
-                                    style="width: 100%; padding: 0.75rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 86, 219, 0.25);"
-                                    onclick="event.stopPropagation(); alert('Proceeding to payment for Pay Now amount: ${formatCurrency(Math.round(payNow))}')">
-                                <span>Pay Now (Upfront)</span> 
-                                <span style="font-size: 1rem; font-weight: 700;">${formatCurrency(Math.round(payNow))}</span>
-                            </button>
-                        </div>
-                        
-                        <!-- Monthly Split Card -->
-                        <div style="background: var(--bg-body); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
-                            ${year <= 3 ? `
-                                <div>
-                                    <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Monthly Split</div>
-                                    
-                                    <div class="text-xs uppercase tracking-wider font-semibold text-muted mb-2">Repayment Terms</div>
-                                    <div class="text-sm flex justify-between mb-1.5 text-muted">
-                                        <span>Split Tenure:</span>
-                                        <span class="font-medium text-text">${year * 12} months</span>
-                                    </div>
-                                    <div class="text-sm flex justify-between mb-3">
-                                        <span class="font-semibold text-muted">Monthly EMI:</span>
-                                        <span class="font-bold text-primary">${formatCurrency(Math.round(splitEmi))} / mo</span>
-                                    </div>
-
-                                    <div class="text-sm flex justify-between pt-2 mb-4" style="border-top: 1px solid var(--border);">
-                                        <span class="font-semibold text-muted">Total Amount Payable:</span>
-                                        <span class="font-bold text-text">${formatCurrency(Math.round(splitTotalPayable))}</span>
-                                    </div>
-                                </div>
-
-                                <button type="button" class="btn btn-primary no-pdf pay-now-btn" 
-                                        style="width: 100%; padding: 0.75rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 86, 219, 0.25);"
-                                        onclick="event.stopPropagation(); alert('Proceeding to payment for 1st Month split amount: ${formatCurrency(Math.round(splitEmi))}')">
-                                    <span>Pay Now (1st Month)</span> 
-                                    <span style="font-size: 1rem; font-weight: 700;">${formatCurrency(Math.round(splitEmi))}</span>
-                                </button>
-                            ` : `
-                                <div>
-                                    <div class="font-semibold text-primary text-base mb-3 pb-2" style="border-bottom: 1px solid var(--border);">Monthly Split</div>
-                                    <div class="text-sm text-muted mt-4 text-center italic py-6">Not applicable for > 3 years.</div>
-                                </div>
-                            `}
-                        </div>
-                    </div>
-                </div>
-                `;
-            })()}
+                    
+                    <table class="breakdown-table mb-4">
+                        <tbody>
+                            ${memberRowsHtml}
+                            ${basePremRowHtml}
+                            ${adjustmentsHtml}
+                            <tr style="border-top: 2px solid var(--border); font-size: 1.1rem; color: var(--primary-dark);">
+                                <td><strong>Final Premium (incl. GST)</strong></td>
+                                <td><strong>${formatCurrency(displayFinalPremium)}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    ${emiSectionHtml}
                 </div>
             </div>
         </div>
-        `;
+    `;
+
     bdRow.appendChild(bdCell);
     
     // PDF listener
     const downloadBtn = bdCell.querySelector('.download-pdf-btn');
     const contentToDownload = bdCell.querySelector('.breakdown-content');
     downloadBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent re-click
+        e.stopPropagation();
         downloadPDF(contentToDownload, `${planName.replace(/\s+/g, '-')}-${year}Yr-Quote.pdf`);
     });
 
